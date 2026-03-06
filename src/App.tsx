@@ -73,8 +73,8 @@ function App() {
   // Persistence initialization
   const getStoredData = <T,>(key: string, initial: T): T => {
     try {
-      const stored = localStorage.getItem(key);
-      if (!stored) return initial;
+    const stored = localStorage.getItem(key);
+    if (!stored) return initial;
       const parsed = JSON.parse(stored);
       // Migration: Fix old wrong names
       if ((key === 'minas_settings' || key === 'minas_v2_settings') && parsed.name) {
@@ -166,11 +166,11 @@ function App() {
     } catch (error) {
       console.error('Error compressing image:', error);
       // Fallback to original method if compression fails
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        callback(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      callback(reader.result as string);
+    };
+    reader.readAsDataURL(file);
     }
   };
 
@@ -179,10 +179,106 @@ function App() {
     document.title = settings.name || 'Sabor Fogão a Lenha';
   }, [settings.name]);
 
-  // Mark as initialized after first render
+  // Sync functions
+  const getApiUrl = () => {
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      // For local development, use Vercel production URL
+      return 'https://minas-ten.vercel.app/api/data';
+    }
+    return `${window.location.origin}/api/data`;
+  };
+
+  const syncToCloud = async () => {
+    try {
+      const response = await fetch(getApiUrl(), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          categories,
+          items,
+          settings,
+          orders,
+        }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        console.log('Data synced to cloud successfully');
+        return true;
+      } else {
+        console.error('Failed to sync to cloud:', result.error);
+        return false;
+      }
+    } catch (error) {
+      console.error('Error syncing to cloud:', error);
+      return false;
+    }
+  };
+
+  const loadFromCloud = async () => {
+    try {
+      const response = await fetch(getApiUrl());
+      const result = await response.json();
+      
+      if (result.success && result.data) {
+        const cloudData = result.data;
+        
+        // Only update if cloud data exists and is newer
+        if (cloudData.categories && cloudData.items && cloudData.settings) {
+          setCategories(cloudData.categories);
+          setItems(cloudData.items);
+          setSettings(cloudData.settings);
+          if (cloudData.orders) {
+            setOrders(cloudData.orders);
+          }
+          
+          // Also save to localStorage
+          try {
+            localStorage.setItem('minas_v2_categories', JSON.stringify(cloudData.categories));
+            localStorage.setItem('minas_v2_items', JSON.stringify(cloudData.items));
+            localStorage.setItem('minas_v2_settings', JSON.stringify(cloudData.settings));
+            if (cloudData.orders) {
+              localStorage.setItem('minas_v2_orders', JSON.stringify(cloudData.orders));
+            }
+          } catch (e) {
+            console.error('Error saving to localStorage:', e);
+          }
+          
+          console.log('Data loaded from cloud successfully');
+          return true;
+        }
+      }
+      return false;
+    } catch (error) {
+      console.error('Error loading from cloud:', error);
+      return false;
+    }
+  };
+
+  // Load from cloud on mount
   useEffect(() => {
-    setIsInitialized(true);
+    loadFromCloud().then((loaded) => {
+      if (loaded) {
+        console.log('Initial data loaded from cloud');
+      } else {
+        console.log('No cloud data found, using localStorage');
+      }
+      setIsInitialized(true);
+    });
   }, []);
+
+  // Auto-sync to cloud when data changes (debounced)
+  useEffect(() => {
+    if (!isInitialized) return;
+    
+    const syncTimeout = setTimeout(() => {
+      syncToCloud();
+    }, 2000); // Wait 2 seconds after last change before syncing
+
+    return () => clearTimeout(syncTimeout);
+  }, [categories, items, settings, isInitialized]);
 
   // Force migration on mount if name is still old
   useEffect(() => {
@@ -1003,7 +1099,7 @@ function App() {
                 activeCategory === cat.id 
                   ? 'bg-orange-700 text-white shadow-xl shadow-orange-700/20 -translate-y-0.5' 
                   : 'bg-white text-stone-400 hover:text-stone-800 hover:bg-orange-100'
-            }`}
+              }`}
             >
               {cat.name}
             </button>
@@ -1035,7 +1131,7 @@ function App() {
                     key={`item-${item.id}-${item.image ? item.image.substring(0, 30) : 'no-image'}`}
                     src={item.image || "https://images.unsplash.com/photo-1514327605112-b887c0e61c0a?q=80&w=2070&auto=format&fit=crop"} 
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
-                    alt={item.name}
+                    alt={item.name} 
                     loading="lazy"
                     onError={(e) => {
                       console.error(`Error loading image for item ${item.name}:`, e);
@@ -1460,7 +1556,7 @@ function App() {
                                       }
                                       try {
                                         await handleFileUpload(file, (base64) => {
-                                          setItems(items.map(i => i.id === item.id ? {...i, image: base64} : i));
+                                      setItems(items.map(i => i.id === item.id ? {...i, image: base64} : i));
                                           // Show success feedback
                                           const button = e.target as HTMLElement;
                                           const originalTitle = button.getAttribute('title');
@@ -1955,6 +2051,37 @@ function App() {
                           <div className="space-y-3 sm:space-y-4">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                               <button 
+                                onClick={async () => {
+                                  alert('Sincronizando com a nuvem...');
+                                  const success = await syncToCloud();
+                                  if (success) {
+                                    alert('✅ Dados sincronizados com sucesso!\n\nAgora todos os clientes verão suas alterações.');
+                                  } else {
+                                    alert('❌ Erro ao sincronizar. Verifique sua conexão e tente novamente.');
+                                  }
+                                }}
+                                className="px-4 sm:px-8 py-3 sm:py-5 bg-green-50 text-green-600 font-black uppercase tracking-widest rounded-xl sm:rounded-[1.5rem] hover:bg-green-100 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs sm:text-sm border-2 border-green-200"
+                              >
+                                <Save size={14} className="sm:w-4 sm:h-4" /> ☁️ Sincronizar com Nuvem (Salvar)
+                              </button>
+                              <button 
+                                onClick={async () => {
+                                  alert('Carregando dados da nuvem...');
+                                  const success = await loadFromCloud();
+                                  if (success) {
+                                    alert('✅ Dados carregados da nuvem com sucesso!\n\nA página será recarregada.');
+                                    setTimeout(() => window.location.reload(), 1000);
+                                  } else {
+                                    alert('❌ Nenhum dado encontrado na nuvem ou erro ao carregar.');
+                                  }
+                                }}
+                                className="px-4 sm:px-8 py-3 sm:py-5 bg-blue-50 text-blue-600 font-black uppercase tracking-widest rounded-xl sm:rounded-[1.5rem] hover:bg-blue-100 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs sm:text-sm border-2 border-blue-200"
+                              >
+                                <Save size={14} className="sm:w-4 sm:h-4" /> ⬇️ Carregar da Nuvem (Baixar)
+                              </button>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                              <button 
                                 onClick={exportData}
                                 className="px-4 sm:px-8 py-3 sm:py-5 bg-green-50 text-green-600 font-black uppercase tracking-widest rounded-xl sm:rounded-[1.5rem] hover:bg-green-100 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs sm:text-sm"
                                 title="Exporta todos os dados completos (arquivo grande)"
@@ -1995,8 +2122,8 @@ function App() {
                         <div>
                           <h5 className="text-lg sm:text-xl font-black text-stone-900 mb-4 uppercase tracking-widest text-xs">Manutenção</h5>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                            <button 
-                              onClick={() => {
+                        <button 
+                          onClick={() => {
                                 try {
                                   // Analyze localStorage
                                   let totalSize = 0;
@@ -2097,9 +2224,9 @@ function App() {
                               className="px-4 sm:px-8 py-3 sm:py-5 bg-purple-50 text-purple-600 font-black uppercase tracking-widest rounded-xl sm:rounded-[1.5rem] hover:bg-purple-100 transition-all active:scale-95 text-xs sm:text-sm"
                             >
                               🔍 Debug localStorage
-                            </button>
-                            <button 
-                              onClick={() => {
+                        </button>
+                        <button 
+                          onClick={() => {
                                 if (confirm('Isso limpará pedidos antigos e imagens grandes para liberar espaço, mas manterá suas configurações. Continuar?')) {
                                   try {
                                     // Keep only last 5 orders
@@ -2133,14 +2260,14 @@ function App() {
                             <button 
                               onClick={() => {
                                 if (confirm('Isso apagará TODAS as suas personalizações e voltará aos dados padrão. Continuar?')) {
-                                  localStorage.clear();
-                                  window.location.reload();
-                                }
-                              }}
+                              localStorage.clear();
+                              window.location.reload();
+                            }
+                          }}
                               className="px-4 sm:px-8 py-3 sm:py-5 bg-red-50 text-red-500 font-black uppercase tracking-widest rounded-xl sm:rounded-[1.5rem] hover:bg-red-100 transition-all active:scale-95 text-xs sm:text-sm"
-                            >
+                        >
                               Resetar Tudo
-                            </button>
+                        </button>
                           </div>
                         </div>
 
