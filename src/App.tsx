@@ -946,7 +946,32 @@ function App() {
         <div className="container mx-auto px-3 sm:px-6 md:px-8 h-14 sm:h-20 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1 overflow-hidden">
             {settings.logo ? (
-              <img src={settings.logo} alt={settings.name || 'Logo'} className="w-10 h-10 sm:w-16 sm:h-16 object-contain rounded-lg sm:rounded-xl flex-shrink-0" />
+              (() => {
+                // Get logo size classes
+                const getLogoSizeClasses = () => {
+                  if (settings.logoSize === 'custom' && settings.logoSizePx) {
+                    return '';
+                  }
+                  const sizeMap: Record<string, string> = {
+                    small: 'w-8 h-8 sm:w-12 sm:h-12',
+                    medium: 'w-10 h-10 sm:w-16 sm:h-16',
+                    large: 'w-12 h-12 sm:w-20 sm:h-20',
+                  };
+                  return sizeMap[settings.logoSize || 'medium'] || sizeMap.medium;
+                };
+                const sizeClasses = getLogoSizeClasses();
+                const customStyle = settings.logoSize === 'custom' && settings.logoSizePx
+                  ? { width: `${settings.logoSizePx}px`, height: `${settings.logoSizePx}px` }
+                  : {};
+                return (
+                  <img 
+                    src={settings.logo} 
+                    alt={settings.name || 'Logo'} 
+                    className={`${sizeClasses} object-contain rounded-lg sm:rounded-xl flex-shrink-0`}
+                    style={customStyle}
+                  />
+                );
+              })()
             ) : (
               <div className="w-10 h-10 sm:w-16 sm:h-16 bg-orange-700 rounded-xl sm:rounded-2xl flex items-center justify-center text-white font-black text-sm sm:text-2xl shadow-lg shadow-orange-700/20 rotate-3 flex-shrink-0">
                 {(settings.name || 'Fogão & Sabor').split(' ').filter(Boolean).map(n => n[0] || '').join('').slice(0, 2).toUpperCase()}
@@ -1744,12 +1769,72 @@ function App() {
                                   <Upload size={14} /> {settings.logo ? 'Trocar Logo' : 'Enviar Logo'}
                                 </button>
                                 {settings.logo && (
-                                  <button 
-                                    onClick={() => setSettings({...settings, logo: ''})}
-                                    className="w-full py-3 text-red-500 hover:bg-red-50 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all"
-                                  >
-                                    Remover
-                                  </button>
+                                  <>
+                                    <div className="space-y-2 pt-2 border-t border-stone-200">
+                                      <label className="text-[9px] font-black text-stone-400 uppercase tracking-[0.2em]">Tamanho da Logo</label>
+                                      <div className="grid grid-cols-3 gap-2">
+                                        <button
+                                          onClick={() => setSettings({...settings, logoSize: 'small'})}
+                                          className={`py-2 px-2 text-[9px] font-black uppercase rounded-lg transition-all ${
+                                            settings.logoSize === 'small' || !settings.logoSize
+                                              ? 'bg-orange-700 text-white'
+                                              : 'bg-white text-stone-600 hover:bg-orange-50'
+                                          }`}
+                                        >
+                                          Pequena
+                                        </button>
+                                        <button
+                                          onClick={() => setSettings({...settings, logoSize: 'medium'})}
+                                          className={`py-2 px-2 text-[9px] font-black uppercase rounded-lg transition-all ${
+                                            settings.logoSize === 'medium'
+                                              ? 'bg-orange-700 text-white'
+                                              : 'bg-white text-stone-600 hover:bg-orange-50'
+                                          }`}
+                                        >
+                                          Média
+                                        </button>
+                                        <button
+                                          onClick={() => setSettings({...settings, logoSize: 'large'})}
+                                          className={`py-2 px-2 text-[9px] font-black uppercase rounded-lg transition-all ${
+                                            settings.logoSize === 'large'
+                                              ? 'bg-orange-700 text-white'
+                                              : 'bg-white text-stone-600 hover:bg-orange-50'
+                                          }`}
+                                        >
+                                          Grande
+                                        </button>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <button
+                                          onClick={() => setSettings({...settings, logoSize: 'custom'})}
+                                          className={`flex-1 py-2 px-2 text-[9px] font-black uppercase rounded-lg transition-all ${
+                                            settings.logoSize === 'custom'
+                                              ? 'bg-orange-700 text-white'
+                                              : 'bg-white text-stone-600 hover:bg-orange-50'
+                                          }`}
+                                        >
+                                          Personalizado
+                                        </button>
+                                        {settings.logoSize === 'custom' && (
+                                          <input
+                                            type="number"
+                                            min="20"
+                                            max="120"
+                                            value={settings.logoSizePx || 64}
+                                            onChange={(e) => setSettings({...settings, logoSizePx: parseInt(e.target.value) || 64})}
+                                            className="w-20 px-2 py-2 text-xs font-black text-stone-900 rounded-lg border border-stone-200 focus:outline-none focus:ring-2 focus:ring-orange-700"
+                                            placeholder="px"
+                                          />
+                                        )}
+                                      </div>
+                                    </div>
+                                    <button 
+                                      onClick={() => setSettings({...settings, logo: ''})}
+                                      className="w-full py-3 text-red-500 hover:bg-red-50 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all"
+                                    >
+                                      Remover
+                                    </button>
+                                  </>
                                 )}
                               </div>
                             </div>

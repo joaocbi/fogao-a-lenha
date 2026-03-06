@@ -16,6 +16,8 @@ export interface Category {
 export interface RestaurantSettings {
   name: string;
   logo?: string;
+  logoSize?: 'small' | 'medium' | 'large' | 'custom';
+  logoSizePx?: number; // Custom size in pixels
   heroVideo?: string;
   heroImage?: string;
   aboutImage1?: string;
