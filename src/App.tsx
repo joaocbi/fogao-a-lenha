@@ -425,23 +425,31 @@ function App() {
     }
   };
 
-  // Export optimized data for sync (removes large images to reduce size)
+  // Export optimized data for sync (removes ALL images to minimize size)
   const exportDataForSync = () => {
     try {
-      // Remove large images from items (keep only small thumbnails)
+      // Remove ALL images from items (keep only text data)
       const optimizedItems = items.map(item => ({
-        ...item,
-        image: item.image && item.image.length > 100000 ? undefined : item.image // Remove images > 100KB
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        category: item.category,
+        available: item.available
+        // image removed completely
       }));
 
-      // Remove large media from settings
+      // Remove ALL media from settings (keep only text/config)
       const optimizedSettings = {
-        ...settings,
-        logo: settings.logo && settings.logo.length > 100000 ? undefined : settings.logo,
-        heroImage: settings.heroImage && settings.heroImage.length > 100000 ? undefined : settings.heroImage,
-        heroVideo: settings.heroVideo && settings.heroVideo.length > 500000 ? undefined : settings.heroVideo, // Remove videos > 500KB
-        aboutImage1: settings.aboutImage1 && settings.aboutImage1.length > 100000 ? undefined : settings.aboutImage1,
-        aboutImage2: settings.aboutImage2 && settings.aboutImage2.length > 100000 ? undefined : settings.aboutImage2,
+        name: settings.name,
+        phone: settings.phone,
+        whatsapp: settings.whatsapp,
+        address: settings.address,
+        openingHours: settings.openingHours,
+        deliveryFee: settings.deliveryFee,
+        minOrder: settings.minOrder,
+        paymentMethods: settings.paymentMethods
+        // All images and videos removed
       };
 
       const exportData = {
@@ -458,13 +466,44 @@ function App() {
       const dataStr = JSON.stringify(exportData);
       const sizeInKB = new Blob([dataStr]).size / 1024;
       
-      // Copy to clipboard
-      navigator.clipboard.writeText(dataStr).then(() => {
-        alert(`Dados otimizados copiados para área de transferência!\n\nTamanho: ${sizeInKB.toFixed(2)} KB\n\nAgora você pode colar no celular usando o botão "Colar JSON".\n\nNota: Imagens grandes foram removidas para reduzir o tamanho.`);
-      }).catch(() => {
-        // Fallback: show in prompt
-        const shouldCopy = confirm(`Dados otimizados prontos!\n\nTamanho: ${sizeInKB.toFixed(2)} KB\n\nClique OK para ver o texto e copiar manualmente.`);
-        if (shouldCopy) {
+      // Split into chunks if too large (WhatsApp limit ~65KB per message)
+      const maxChunkSize = 60000; // 60KB per chunk
+      
+      if (dataStr.length > maxChunkSize) {
+        // Split into multiple chunks
+        const chunks: string[] = [];
+        const totalChunks = Math.ceil(dataStr.length / maxChunkSize);
+        
+        for (let i = 0; i < totalChunks; i++) {
+          const start = i * maxChunkSize;
+          const end = start + maxChunkSize;
+          chunks.push(dataStr.substring(start, end));
+        }
+        
+        // Create a formatted message with all chunks
+        let message = `📱 SINCRONIZAÇÃO DE DADOS\n\n`;
+        message += `Total: ${totalChunks} parte(s)\n`;
+        message += `Tamanho: ${sizeInKB.toFixed(2)} KB\n\n`;
+        message += `⚠️ IMPORTANTE: Copie TODAS as partes abaixo e cole no celular usando o botão "Colar JSON em Partes"\n\n`;
+        message += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+        
+        chunks.forEach((chunk, index) => {
+          message += `PARTE ${index + 1}/${totalChunks}:\n`;
+          message += `${chunk}\n\n`;
+          message += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+        });
+        
+        // Copy to clipboard
+        navigator.clipboard.writeText(message).then(() => {
+          alert(`Dados divididos em ${totalChunks} partes!\n\nTamanho total: ${sizeInKB.toFixed(2)} KB\n\nTodas as partes foram copiadas. Envie via WhatsApp e depois use o botão "Colar JSON em Partes" no celular.\n\nNota: Todas as imagens foram removidas para reduzir o tamanho.`);
+        }).catch(() => {
+          prompt('Copie esta mensagem completa:', message);
+        });
+      } else {
+        // Single chunk - small enough
+        navigator.clipboard.writeText(dataStr).then(() => {
+          alert(`Dados otimizados copiados!\n\nTamanho: ${sizeInKB.toFixed(2)} KB\n\nCole no celular usando o botão "Colar JSON".\n\nNota: Todas as imagens foram removidas para reduzir o tamanho.`);
+        }).catch(() => {
           const textarea = document.createElement('textarea');
           textarea.value = dataStr;
           textarea.style.position = 'fixed';
@@ -478,11 +517,81 @@ function App() {
             prompt('Copie este texto:', dataStr);
           }
           document.body.removeChild(textarea);
-        }
-      });
+        });
+      }
     } catch (error) {
       console.error('Error exporting optimized data:', error);
       alert('Erro ao exportar dados otimizados. Tente novamente.');
+    }
+  };
+
+  // Import data from multiple chunks
+  const importFromChunks = () => {
+    const chunks: string[] = [];
+    let totalChunks = 0;
+    
+    // Get first chunk to determine total
+    const firstInput = prompt('Cole a PRIMEIRA parte do JSON (deve conter "PARTE 1/X"):');
+    if (!firstInput) return;
+    
+    // Try to extract total chunks from message format
+    const totalMatch = firstInput.match(/Total:\s*(\d+)/);
+    if (totalMatch) {
+      totalChunks = parseInt(totalMatch[1]);
+    } else {
+      // Try to find in PARTE format
+      const parteMatch = firstInput.match(/PARTE\s*\d+\/(\d+)/);
+      if (parteMatch) {
+        totalChunks = parseInt(parteMatch[1]);
+      } else {
+        totalChunks = parseInt(prompt('Quantas partes no total?') || '1');
+      }
+    }
+    
+    // Extract first chunk
+    const firstChunkMatch = firstInput.match(/PARTE\s*\d+\/\d+:\s*([\s\S]*?)(?:\n\n━━|$)/);
+    if (firstChunkMatch) {
+      chunks.push(firstChunkMatch[1].trim());
+    } else {
+      // Try to extract JSON directly
+      const jsonMatch = firstInput.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        chunks.push(jsonMatch[0]);
+      } else {
+        chunks.push(firstInput);
+      }
+    }
+    
+    // Get remaining chunks
+    for (let i = 2; i <= totalChunks; i++) {
+      const chunkInput = prompt(`Cole a parte ${i}/${totalChunks}:`);
+      if (!chunkInput) {
+        alert('Importação cancelada. Todas as partes são necessárias.');
+        return;
+      }
+      
+      const chunkMatch = chunkInput.match(/PARTE\s*\d+\/\d+:\s*([\s\S]*?)(?:\n\n━━|$)/);
+      if (chunkMatch) {
+        chunks.push(chunkMatch[1].trim());
+      } else {
+        const jsonMatch = chunkInput.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          chunks.push(jsonMatch[0]);
+        } else {
+          chunks.push(chunkInput);
+        }
+      }
+    }
+    
+    // Combine all chunks
+    const combinedData = chunks.join('');
+    
+    try {
+      const importedData = JSON.parse(combinedData);
+      processImportedData(importedData);
+    } catch (error) {
+      console.error('Error parsing combined chunks:', error);
+      alert('Erro ao processar as partes. Certifique-se de que copiou todas as partes corretamente.');
     }
   };
 
@@ -1697,10 +1806,16 @@ function App() {
                               onClick={importFromPaste}
                               className="w-full px-4 sm:px-8 py-3 sm:py-5 bg-blue-50 text-blue-600 font-black uppercase tracking-widest rounded-xl sm:rounded-[1.5rem] hover:bg-blue-100 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs sm:text-sm"
                             >
-                              <MessageCircle size={14} className="sm:w-4 sm:h-4" /> Colar JSON (Sincronizar)
+                              <MessageCircle size={14} className="sm:w-4 sm:h-4" /> Colar JSON (Texto Único)
+                            </button>
+                            <button 
+                              onClick={importFromChunks}
+                              className="w-full px-4 sm:px-8 py-3 sm:py-5 bg-indigo-50 text-indigo-600 font-black uppercase tracking-widest rounded-xl sm:rounded-[1.5rem] hover:bg-indigo-100 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs sm:text-sm border-2 border-indigo-200"
+                            >
+                              <MessageCircle size={14} className="sm:w-4 sm:h-4" /> 📱 Colar JSON em Partes (WhatsApp)
                             </button>
                             <p className="text-[10px] sm:text-xs text-stone-400 text-center px-2">
-                              💡 <strong>Para celular:</strong> Use "Copiar para Celular" no PC, depois "Colar JSON" no celular. Imagens grandes são removidas automaticamente para reduzir o tamanho.
+                              💡 <strong>Para WhatsApp:</strong> Use "Copiar para Celular" no PC (divide automaticamente), depois "Colar JSON em Partes" no celular. Todas as imagens são removidas para reduzir tamanho.
                             </p>
                           </div>
                         </div>
