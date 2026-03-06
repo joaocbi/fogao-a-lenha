@@ -558,23 +558,39 @@ function App() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-transparent z-10" />
         {settings.heroVideo ? (
           <video 
+            key={`hero-video-${settings.heroVideo.substring(0, 50)}`}
             autoPlay 
             muted 
             loop 
             playsInline 
+            preload="auto"
             className="absolute inset-0 w-full h-full object-cover scale-105"
             src={settings.heroVideo}
+            onError={(e) => {
+              console.error('Error loading hero video:', e);
+              // Fallback to image if video fails
+              const videoElement = e.target as HTMLVideoElement;
+              videoElement.style.display = 'none';
+            }}
+            onLoadedData={() => {
+              console.log('Hero video loaded successfully');
+            }}
           />
         ) : (
           <img 
-            key={settings.heroImage || 'default-hero'}
+            key={`hero-image-${settings.heroImage ? settings.heroImage.substring(0, 50) : 'default'}`}
             src={settings.heroImage || "https://images.unsplash.com/photo-1547592166-23ac45744acd?q=80&w=2071&auto=format&fit=crop"} 
             className="absolute inset-0 w-full h-full object-cover scale-105"
             alt="Restaurante"
+            loading="eager"
             onError={(e) => {
+              console.error('Error loading hero image:', e);
               // Fallback if image fails to load
               const target = e.target as HTMLImageElement;
               target.src = "https://images.unsplash.com/photo-1547592166-23ac45744acd?q=80&w=2071&auto=format&fit=crop";
+            }}
+            onLoad={() => {
+              console.log('Hero image loaded successfully');
             }}
           />
         )}
@@ -674,9 +690,19 @@ function App() {
               >
                 <div className="h-48 sm:h-64 md:h-72 relative overflow-hidden shrink-0">
                   <img 
+                    key={`item-${item.id}-${item.image ? item.image.substring(0, 30) : 'no-image'}`}
                     src={item.image || "https://images.unsplash.com/photo-1514327605112-b887c0e61c0a?q=80&w=2070&auto=format&fit=crop"} 
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
-                    alt={item.name} 
+                    alt={item.name}
+                    loading="lazy"
+                    onError={(e) => {
+                      console.error(`Error loading image for item ${item.name}:`, e);
+                      const target = e.target as HTMLImageElement;
+                      target.src = "https://images.unsplash.com/photo-1514327605112-b887c0e61c0a?q=80&w=2070&auto=format&fit=crop";
+                    }}
+                    onLoad={() => {
+                      console.log(`Image loaded for item: ${item.name}`);
+                    }}
                   />
                   {!item.available && (
                     <div className="absolute inset-0 bg-stone-900/80 backdrop-blur-sm flex items-center justify-center">
@@ -729,8 +755,28 @@ function App() {
           <div className="relative group mt-8 md:mt-0">
             <div className="absolute -inset-4 bg-orange-700/20 blur-[100px] rounded-full group-hover:bg-orange-700/30 transition-all duration-700" />
             <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-6 relative">
-              <img src={settings.aboutImage1 || "https://images.unsplash.com/photo-1544148103-0773bf10d330?q=80&w=2070&auto=format&fit=crop"} className="rounded-2xl sm:rounded-3xl h-[200px] sm:h-[300px] md:h-[400px] lg:h-[450px] w-full object-cover shadow-2xl rotate-3" alt="Ambiente" />
-              <img src={settings.aboutImage2 || "https://images.unsplash.com/photo-1541544741938-0af808871cc0?q=80&w=2069&auto=format&fit=crop"} className="rounded-2xl sm:rounded-3xl h-[200px] sm:h-[300px] md:h-[400px] lg:h-[450px] w-full object-cover shadow-2xl -rotate-3 mt-6 sm:mt-8 md:mt-12" alt="Comida" />
+              <img 
+                key={`about-1-${settings.aboutImage1 ? settings.aboutImage1.substring(0, 30) : 'default'}`}
+                src={settings.aboutImage1 || "https://images.unsplash.com/photo-1544148103-0773bf10d330?q=80&w=2070&auto=format&fit=crop"} 
+                className="rounded-2xl sm:rounded-3xl h-[200px] sm:h-[300px] md:h-[400px] lg:h-[450px] w-full object-cover shadow-2xl rotate-3" 
+                alt="Ambiente"
+                loading="lazy"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = "https://images.unsplash.com/photo-1544148103-0773bf10d330?q=80&w=2070&auto=format&fit=crop";
+                }}
+              />
+              <img 
+                key={`about-2-${settings.aboutImage2 ? settings.aboutImage2.substring(0, 30) : 'default'}`}
+                src={settings.aboutImage2 || "https://images.unsplash.com/photo-1541544741938-0af808871cc0?q=80&w=2069&auto=format&fit=crop"} 
+                className="rounded-2xl sm:rounded-3xl h-[200px] sm:h-[300px] md:h-[400px] lg:h-[450px] w-full object-cover shadow-2xl -rotate-3 mt-6 sm:mt-8 md:mt-12" 
+                alt="Comida"
+                loading="lazy"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = "https://images.unsplash.com/photo-1541544741938-0af808871cc0?q=80&w=2069&auto=format&fit=crop";
+                }}
+              />
             </div>
           </div>
         </div>
