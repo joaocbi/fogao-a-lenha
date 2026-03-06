@@ -487,18 +487,18 @@ function App() {
     <div className="min-h-screen font-sans bg-orange-50 text-stone-900 selection:bg-orange-200 selection:text-orange-900">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md shadow-sm border-b border-orange-100">
-        <div className="container mx-auto px-4 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <div className="container mx-auto px-3 sm:px-4 h-16 sm:h-20 flex items-center justify-between">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
             {settings.logo ? (
-              <img src={settings.logo} alt={settings.name || 'Logo'} className="w-16 h-16 object-contain rounded-xl" />
+              <img src={settings.logo} alt={settings.name || 'Logo'} className="w-12 h-12 sm:w-16 sm:h-16 object-contain rounded-xl flex-shrink-0" />
             ) : (
-              <div className="w-16 h-16 bg-orange-700 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-orange-700/20 rotate-3">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-orange-700 rounded-2xl flex items-center justify-center text-white font-black text-lg sm:text-2xl shadow-lg shadow-orange-700/20 rotate-3 flex-shrink-0">
                 {(settings.name || 'Sabor Fogão a Lenha').split(' ').filter(Boolean).map(n => n[0] || '').join('').slice(0, 2).toUpperCase()}
               </div>
             )}
-            <div className="flex flex-col justify-center">
-              <h1 className="text-2xl font-black text-orange-900 leading-none tracking-tight mb-1">{settings.name || 'Sabor Fogão a Lenha'}</h1>
-              <p className="text-[11px] text-green-700 font-bold tracking-[0.2em] uppercase">Comida Caseira</p>
+            <div className="flex flex-col justify-center min-w-0">
+              <h1 className="text-sm sm:text-lg md:text-2xl font-black text-orange-900 leading-none tracking-tight mb-0.5 sm:mb-1 truncate">{settings.name || 'Sabor Fogão a Lenha'}</h1>
+              <p className="text-[9px] sm:text-[11px] text-green-700 font-bold tracking-[0.2em] uppercase">Comida Caseira</p>
             </div>
           </div>
 
@@ -508,22 +508,22 @@ function App() {
             <a href="#contact" className="text-stone-600 hover:text-orange-700 font-bold text-sm uppercase tracking-widest transition-colors">Contato</a>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             <button 
               onClick={() => setIsAdminOpen(true)}
-              className="group flex items-center gap-2 p-3 text-stone-400 hover:text-orange-700 hover:bg-orange-50 rounded-2xl transition-all border border-transparent hover:border-orange-100"
+              className="group flex items-center gap-1 sm:gap-2 p-2 sm:p-3 text-stone-400 hover:text-orange-700 hover:bg-orange-50 rounded-xl sm:rounded-2xl transition-all border border-transparent hover:border-orange-100"
               title="Painel de Controle (Admin)"
             >
-              <Settings size={22} className="group-hover:rotate-90 transition-transform duration-500" />
+              <Settings size={18} className="sm:w-[22px] sm:h-[22px] group-hover:rotate-90 transition-transform duration-500" />
               <span className="hidden lg:block text-[10px] font-black uppercase tracking-widest">Painel Admin</span>
             </button>
             <button 
               onClick={() => setIsCartOpen(true)}
-              className="relative p-3 bg-orange-50 text-orange-700 hover:bg-orange-100 rounded-2xl transition-all"
+              className="relative p-2 sm:p-3 bg-orange-50 text-orange-700 hover:bg-orange-100 rounded-xl sm:rounded-2xl transition-all"
             >
-              <ShoppingCart size={22} />
+              <ShoppingCart size={18} className="sm:w-[22px] sm:h-[22px]" />
               {cart.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-green-600 text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center border-4 border-white shadow-md">
+                <span className="absolute -top-1 -right-1 bg-green-600 text-white text-[9px] sm:text-[10px] font-black w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center border-2 sm:border-4 border-white shadow-md">
                   {cart.length}
                 </span>
               )}
@@ -533,7 +533,7 @@ function App() {
       </header>
 
       {/* Hero */}
-      <section className="relative h-[600px] flex items-center justify-center overflow-hidden">
+      <section className="relative h-[400px] sm:h-[500px] md:h-[600px] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-transparent z-10" />
         {settings.heroVideo ? (
           <video 
@@ -561,7 +561,7 @@ function App() {
           <motion.span 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-block px-4 py-1.5 bg-orange-700 text-white text-xs font-black uppercase tracking-[0.3em] rounded-full mb-6 shadow-xl"
+            className="inline-block px-3 py-1 sm:px-4 sm:py-1.5 bg-orange-700 text-white text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] rounded-full mb-4 sm:mb-6 shadow-xl"
           >
             Bem-vindo ao Interior
           </motion.span>
@@ -569,15 +569,15 @@ function App() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-6xl md:text-8xl font-black mb-8 leading-[0.9] tracking-tighter"
+            className="text-3xl sm:text-4xl md:text-6xl lg:text-8xl font-black mb-4 sm:mb-6 md:mb-8 leading-[0.9] tracking-tighter px-2"
           >
-            O sabor <span className="text-orange-400 underline decoration-orange-400/30 underline-offset-8">autêntico</span> da Comida Caseira
+            O sabor <span className="text-orange-400 underline decoration-orange-400/30 underline-offset-4 sm:underline-offset-8">autêntico</span> da Comida Caseira
           </motion.h2>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-xl md:text-2xl mb-12 font-medium text-stone-200 max-w-2xl mx-auto leading-relaxed"
+            className="text-sm sm:text-lg md:text-xl lg:text-2xl mb-8 sm:mb-10 md:mb-12 font-medium text-stone-200 max-w-2xl mx-auto leading-relaxed px-2"
           >
             Pratos preparados com ingredientes frescos e muito amor.
           </motion.p>
@@ -585,17 +585,17 @@ function App() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4"
+            className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full px-4"
           >
             <a 
               href="#menu" 
-              className="w-full sm:w-auto px-12 py-5 bg-orange-700 hover:bg-orange-800 text-white text-lg font-black rounded-3xl transition-all shadow-2xl shadow-orange-700/40 hover:-translate-y-1 active:scale-95 uppercase tracking-widest"
+              className="w-full sm:w-auto px-8 sm:px-12 py-3 sm:py-5 bg-orange-700 hover:bg-orange-800 text-white text-sm sm:text-lg font-black rounded-2xl sm:rounded-3xl transition-all shadow-2xl shadow-orange-700/40 hover:-translate-y-1 active:scale-95 uppercase tracking-widest"
             >
               Ver Cardápio
             </a>
             <a 
               href="#contact" 
-              className="w-full sm:w-auto px-12 py-5 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white text-lg font-black rounded-3xl transition-all border border-white/30 hover:-translate-y-1 active:scale-95 uppercase tracking-widest"
+              className="w-full sm:w-auto px-8 sm:px-12 py-3 sm:py-5 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white text-sm sm:text-lg font-black rounded-2xl sm:rounded-3xl transition-all border border-white/30 hover:-translate-y-1 active:scale-95 uppercase tracking-widest"
             >
               Localização
             </a>
@@ -604,11 +604,11 @@ function App() {
       </section>
 
       {/* Categories Bar */}
-      <div className="sticky top-20 z-40 bg-orange-50/90 backdrop-blur-xl border-b border-orange-100 py-6">
-        <div className="container mx-auto px-4 flex items-center gap-4 overflow-x-auto no-scrollbar">
+      <div className="sticky top-16 sm:top-20 z-40 bg-orange-50/90 backdrop-blur-xl border-b border-orange-100 py-4 sm:py-6">
+        <div className="container mx-auto px-3 sm:px-4 flex items-center gap-2 sm:gap-4 overflow-x-auto no-scrollbar">
           <button 
             onClick={() => setActiveCategory('all')} 
-            className={`px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest whitespace-nowrap transition-all ${
+            className={`px-4 sm:px-8 py-2 sm:py-3 rounded-xl sm:rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest whitespace-nowrap transition-all ${
               activeCategory === 'all' 
                 ? 'bg-orange-700 text-white shadow-xl shadow-orange-700/20 -translate-y-0.5' 
                 : 'bg-white text-stone-400 hover:text-stone-800 hover:bg-orange-100'
@@ -620,11 +620,11 @@ function App() {
             <button 
               key={cat.id} 
               onClick={() => setActiveCategory(cat.id)} 
-              className={`px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest whitespace-nowrap transition-all ${
+              className={`px-4 sm:px-8 py-2 sm:py-3 rounded-xl sm:rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest whitespace-nowrap transition-all ${
                 activeCategory === cat.id 
                   ? 'bg-orange-700 text-white shadow-xl shadow-orange-700/20 -translate-y-0.5' 
                   : 'bg-white text-stone-400 hover:text-stone-800 hover:bg-orange-100'
-              }`}
+            }`}
             >
               {cat.name}
             </button>
@@ -633,14 +633,14 @@ function App() {
       </div>
 
       {/* Menu Grid */}
-      <section id="menu" className="py-24 container mx-auto px-4">
-        <div className="flex flex-col items-center mb-16 text-center">
-          <span className="text-orange-700 font-black uppercase tracking-[0.3em] text-xs mb-4">Seleção Especial</span>
-          <h3 className="text-5xl font-black text-stone-900 tracking-tighter">Nosso Cardápio</h3>
-          <div className="w-20 h-1.5 bg-orange-700 rounded-full mt-6" />
+      <section id="menu" className="py-12 sm:py-16 md:py-24 container mx-auto px-3 sm:px-4">
+        <div className="flex flex-col items-center mb-8 sm:mb-12 md:mb-16 text-center">
+          <span className="text-orange-700 font-black uppercase tracking-[0.3em] text-[10px] sm:text-xs mb-3 sm:mb-4">Seleção Especial</span>
+          <h3 className="text-3xl sm:text-4xl md:text-5xl font-black text-stone-900 tracking-tighter">Nosso Cardápio</h3>
+          <div className="w-16 sm:w-20 h-1 sm:h-1.5 bg-orange-700 rounded-full mt-4 sm:mt-6" />
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 md:gap-10">
           <AnimatePresence mode="popLayout">
             {filteredItems.map(item => (
               <motion.div 
@@ -649,9 +649,9 @@ function App() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 key={item.id} 
-                className="bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.04)] hover:shadow-[0_40px_80px_rgba(0,0,0,0.08)] transition-all overflow-hidden border border-orange-100 group flex flex-col h-full"
+                className="bg-white rounded-2xl sm:rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.04)] hover:shadow-[0_40px_80px_rgba(0,0,0,0.08)] transition-all overflow-hidden border border-orange-100 group flex flex-col h-full"
               >
-                <div className="h-72 relative overflow-hidden shrink-0">
+                <div className="h-48 sm:h-64 md:h-72 relative overflow-hidden shrink-0">
                   <img 
                     src={item.image || "https://images.unsplash.com/photo-1514327605112-b887c0e61c0a?q=80&w=2070&auto=format&fit=crop"} 
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
@@ -659,22 +659,22 @@ function App() {
                   />
                   {!item.available && (
                     <div className="absolute inset-0 bg-stone-900/80 backdrop-blur-sm flex items-center justify-center">
-                      <span className="text-white font-black uppercase tracking-widest text-lg px-6 py-2 border-2 border-white/30 rounded-full">Esgotado</span>
+                      <span className="text-white font-black uppercase tracking-widest text-sm sm:text-lg px-4 sm:px-6 py-1.5 sm:py-2 border-2 border-white/30 rounded-full">Esgotado</span>
                     </div>
                   )}
-                  <div className="absolute top-6 right-6 bg-white/95 backdrop-blur shadow-xl px-4 py-2 rounded-2xl font-black text-orange-700 text-lg">
+                  <div className="absolute top-3 right-3 sm:top-6 sm:right-6 bg-white/95 backdrop-blur shadow-xl px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl sm:rounded-2xl font-black text-orange-700 text-sm sm:text-lg">
                     {item.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                   </div>
                 </div>
-                <div className="p-8 flex flex-col flex-1">
-                  <h4 className="text-2xl font-black text-stone-900 mb-3 group-hover:text-orange-700 transition-colors">{item.name}</h4>
-                  <p className="text-stone-500 text-sm mb-8 leading-relaxed line-clamp-3">{item.description}</p>
+                <div className="p-4 sm:p-6 md:p-8 flex flex-col flex-1">
+                  <h4 className="text-lg sm:text-xl md:text-2xl font-black text-stone-900 mb-2 sm:mb-3 group-hover:text-orange-700 transition-colors">{item.name}</h4>
+                  <p className="text-stone-500 text-xs sm:text-sm mb-4 sm:mb-6 md:mb-8 leading-relaxed line-clamp-3">{item.description}</p>
                   <button 
                     onClick={() => addToCart(item)} 
                     disabled={!item.available} 
-                    className="mt-auto w-full bg-stone-50 hover:bg-orange-700 text-stone-800 hover:text-white font-black py-5 rounded-[1.5rem] transition-all flex items-center justify-center gap-3 disabled:opacity-30 disabled:cursor-not-allowed group/btn"
+                    className="mt-auto w-full bg-stone-50 hover:bg-orange-700 text-stone-800 hover:text-white font-black py-3 sm:py-4 md:py-5 rounded-xl sm:rounded-[1.5rem] transition-all flex items-center justify-center gap-2 sm:gap-3 disabled:opacity-30 disabled:cursor-not-allowed group/btn text-xs sm:text-sm"
                   >
-                    <Plus size={20} className="group-hover/btn:rotate-90 transition-transform" /> 
+                    <Plus size={16} className="sm:w-5 sm:h-5 group-hover/btn:rotate-90 transition-transform" /> 
                     ADICIONAR
                   </button>
                 </div>
@@ -685,64 +685,64 @@ function App() {
       </section>
 
       {/* About Section */}
-      <section id="about" className="py-32 bg-stone-900 relative overflow-hidden">
+      <section id="about" className="py-16 sm:py-24 md:py-32 bg-stone-900 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-1/3 h-full bg-orange-700/5 rotate-12 translate-x-1/2" />
-        <div className="container mx-auto px-4 grid md:grid-cols-2 gap-24 items-center relative z-10">
+        <div className="container mx-auto px-3 sm:px-4 grid md:grid-cols-2 gap-12 sm:gap-16 md:gap-24 items-center relative z-10">
           <div>
-            <span className="text-orange-400 font-black tracking-[0.3em] uppercase text-xs mb-6 block">Tradição & Família</span>
-            <h3 className="text-5xl md:text-7xl font-black text-white mb-8 tracking-tighter leading-[0.9]">Sabor e dedicação em cada detalhe</h3>
-            <p className="text-stone-400 text-xl leading-relaxed mb-12 font-medium">
+            <span className="text-orange-400 font-black tracking-[0.3em] uppercase text-[10px] sm:text-xs mb-4 sm:mb-6 block">Tradição & Família</span>
+            <h3 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-black text-white mb-6 sm:mb-8 tracking-tighter leading-[0.9]">Sabor e dedicação em cada detalhe</h3>
+            <p className="text-stone-400 text-base sm:text-lg md:text-xl leading-relaxed mb-8 sm:mb-10 md:mb-12 font-medium">
               O restaurante Sabor Fogão a Lenha nasceu do desejo de trazer os sabores autêntico da comida caseira.
             </p>
-            <div className="grid grid-cols-2 gap-10">
-              <div className="p-8 bg-white/5 rounded-[2rem] border border-white/10">
-                <span className="block text-4xl font-black text-orange-400 mb-2">10+</span>
-                <span className="text-stone-500 font-bold uppercase tracking-widest text-xs">Anos de Tradição</span>
+            <div className="grid grid-cols-2 gap-4 sm:gap-6 md:gap-10">
+              <div className="p-4 sm:p-6 md:p-8 bg-white/5 rounded-xl sm:rounded-2xl border border-white/10">
+                <span className="block text-2xl sm:text-3xl md:text-4xl font-black text-orange-400 mb-1 sm:mb-2">10+</span>
+                <span className="text-stone-500 font-bold uppercase tracking-widest text-[10px] sm:text-xs">Anos de Tradição</span>
               </div>
-              <div className="p-8 bg-white/5 rounded-[2rem] border border-white/10">
-                <span className="block text-4xl font-black text-orange-400 mb-2">100%</span>
-                <span className="text-stone-500 font-bold uppercase tracking-widest text-xs">Ingredientes Locais</span>
+              <div className="p-4 sm:p-6 md:p-8 bg-white/5 rounded-xl sm:rounded-2xl border border-white/10">
+                <span className="block text-2xl sm:text-3xl md:text-4xl font-black text-orange-400 mb-1 sm:mb-2">100%</span>
+                <span className="text-stone-500 font-bold uppercase tracking-widest text-[10px] sm:text-xs">Ingredientes Locais</span>
               </div>
             </div>
           </div>
-          <div className="relative group">
+          <div className="relative group mt-8 md:mt-0">
             <div className="absolute -inset-4 bg-orange-700/20 blur-[100px] rounded-full group-hover:bg-orange-700/30 transition-all duration-700" />
-            <div className="grid grid-cols-2 gap-6 relative">
-              <img src={settings.aboutImage1 || "https://images.unsplash.com/photo-1544148103-0773bf10d330?q=80&w=2070&auto=format&fit=crop"} className="rounded-[3rem] h-[450px] w-full object-cover shadow-2xl rotate-3" alt="Ambiente" />
-              <img src={settings.aboutImage2 || "https://images.unsplash.com/photo-1541544741938-0af808871cc0?q=80&w=2069&auto=format&fit=crop"} className="rounded-[3rem] h-[450px] w-full object-cover shadow-2xl -rotate-3 mt-12" alt="Comida" />
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-6 relative">
+              <img src={settings.aboutImage1 || "https://images.unsplash.com/photo-1544148103-0773bf10d330?q=80&w=2070&auto=format&fit=crop"} className="rounded-2xl sm:rounded-3xl h-[200px] sm:h-[300px] md:h-[400px] lg:h-[450px] w-full object-cover shadow-2xl rotate-3" alt="Ambiente" />
+              <img src={settings.aboutImage2 || "https://images.unsplash.com/photo-1541544741938-0af808871cc0?q=80&w=2069&auto=format&fit=crop"} className="rounded-2xl sm:rounded-3xl h-[200px] sm:h-[300px] md:h-[400px] lg:h-[450px] w-full object-cover shadow-2xl -rotate-3 mt-6 sm:mt-8 md:mt-12" alt="Comida" />
             </div>
           </div>
         </div>
       </section>
 
       {/* Contact Section */}
-      <section id="contact" className="py-32 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-3 gap-16">
-            <div className="p-12 bg-stone-50 rounded-[3rem] text-center border border-stone-100 hover:border-orange-200 transition-colors group">
-              <div className="w-20 h-20 bg-white text-orange-700 rounded-3xl flex items-center justify-center mb-8 mx-auto shadow-xl group-hover:scale-110 transition-transform">
-                <Phone size={32} />
+      <section id="contact" className="py-12 sm:py-20 md:py-32 bg-white">
+        <div className="container mx-auto px-3 sm:px-4">
+          <div className="grid md:grid-cols-3 gap-6 sm:gap-10 md:gap-16">
+            <div className="p-6 sm:p-8 md:p-12 bg-stone-50 rounded-2xl sm:rounded-3xl text-center border border-stone-100 hover:border-orange-200 transition-colors group">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white text-orange-700 rounded-2xl sm:rounded-3xl flex items-center justify-center mb-6 sm:mb-8 mx-auto shadow-xl group-hover:scale-110 transition-transform">
+                <Phone size={24} className="sm:w-8 sm:h-8" />
               </div>
-              <h4 className="font-black text-2xl mb-4 tracking-tight">Contato</h4>
-              <p className="text-stone-500 font-bold mb-1">{settings.phone || '(00) 0000-0000'}</p>
-              <p className="text-orange-700 font-black">{settings.whatsapp || '(00) 00000-0000'}</p>
+              <h4 className="font-black text-xl sm:text-2xl mb-3 sm:mb-4 tracking-tight">Contato</h4>
+              <p className="text-stone-500 font-bold mb-1 text-sm sm:text-base">{settings.phone || '(00) 0000-0000'}</p>
+              <p className="text-orange-700 font-black text-sm sm:text-base">{settings.whatsapp || '(00) 00000-0000'}</p>
             </div>
-            <div className="p-12 bg-stone-50 rounded-[3rem] text-center border border-stone-100 hover:border-orange-200 transition-colors group">
-              <div className="w-20 h-20 bg-white text-green-700 rounded-3xl flex items-center justify-center mb-8 mx-auto shadow-xl group-hover:scale-110 transition-transform">
-                <MapPin size={32} />
+            <div className="p-6 sm:p-8 md:p-12 bg-stone-50 rounded-2xl sm:rounded-3xl text-center border border-stone-100 hover:border-orange-200 transition-colors group">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white text-green-700 rounded-2xl sm:rounded-3xl flex items-center justify-center mb-6 sm:mb-8 mx-auto shadow-xl group-hover:scale-110 transition-transform">
+                <MapPin size={24} className="sm:w-8 sm:h-8" />
               </div>
-              <h4 className="font-black text-2xl mb-4 tracking-tight">Endereço</h4>
-              <p className="text-stone-500 font-medium leading-relaxed">{settings.address || 'Endereço não informado'}</p>
+              <h4 className="font-black text-xl sm:text-2xl mb-3 sm:mb-4 tracking-tight">Endereço</h4>
+              <p className="text-stone-500 font-medium leading-relaxed text-sm sm:text-base">{settings.address || 'Endereço não informado'}</p>
             </div>
-            <div className="p-12 bg-stone-50 rounded-[3rem] text-center border border-stone-100 hover:border-orange-200 transition-colors group">
-              <div className="w-20 h-20 bg-white text-amber-600 rounded-3xl flex items-center justify-center mb-8 mx-auto shadow-xl group-hover:scale-110 transition-transform">
-                <Clock size={32} />
+            <div className="p-6 sm:p-8 md:p-12 bg-stone-50 rounded-2xl sm:rounded-3xl text-center border border-stone-100 hover:border-orange-200 transition-colors group">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white text-amber-600 rounded-2xl sm:rounded-3xl flex items-center justify-center mb-6 sm:mb-8 mx-auto shadow-xl group-hover:scale-110 transition-transform">
+                <Clock size={24} className="sm:w-8 sm:h-8" />
               </div>
-              <h4 className="font-black text-2xl mb-4 tracking-tight">Horários</h4>
+              <h4 className="font-black text-xl sm:text-2xl mb-3 sm:mb-4 tracking-tight">Horários</h4>
               <div className="space-y-1">
                 {Object.entries(settings.openingHours || {}).map(([day, hours]) => (
-                  <p key={day} className="text-stone-500 font-medium text-sm">
-                    <span className="font-black text-stone-800 uppercase text-[10px] tracking-widest mr-2">{day}:</span>
+                  <p key={day} className="text-stone-500 font-medium text-xs sm:text-sm">
+                    <span className="font-black text-stone-800 uppercase text-[9px] sm:text-[10px] tracking-widest mr-2">{day}:</span>
                     {hours}
                   </p>
                 ))}
@@ -753,11 +753,11 @@ function App() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-orange-50 py-24 border-t border-orange-100">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-black text-stone-900 mb-4 tracking-tighter">{settings.name || 'Sabor Fogão a Lenha'}</h2>
-          <p className="text-stone-500 font-medium max-w-lg mx-auto mb-12 leading-relaxed">O melhor da culinária mineira direto para sua mesa, com o tempero que você só encontra no interior.</p>
-          <div className="flex justify-center gap-10 mb-16">
+      <footer className="bg-orange-50 py-12 sm:py-16 md:py-24 border-t border-orange-100">
+        <div className="container mx-auto px-3 sm:px-4 text-center">
+          <h2 className="text-2xl sm:text-3xl font-black text-stone-900 mb-3 sm:mb-4 tracking-tighter">{settings.name || 'Sabor Fogão a Lenha'}</h2>
+          <p className="text-stone-500 font-medium max-w-lg mx-auto mb-8 sm:mb-12 leading-relaxed text-sm sm:text-base">O melhor da culinária mineira direto para sua mesa, com o tempero que você só encontra no interior.</p>
+          <div className="flex justify-center gap-6 sm:gap-8 md:gap-10 mb-12 sm:mb-16 flex-wrap">
             <a href="#" className="text-stone-400 hover:text-orange-700 font-black uppercase text-xs tracking-[0.2em] transition-colors">Instagram</a>
             <a href="#" className="text-stone-400 hover:text-orange-700 font-black uppercase text-xs tracking-[0.2em] transition-colors">Facebook</a>
             <a href="#" className="text-stone-400 hover:text-orange-700 font-black uppercase text-xs tracking-[0.2em] transition-colors">Twitter</a>
