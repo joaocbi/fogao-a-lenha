@@ -661,38 +661,40 @@ function App() {
       return false;
     }
     
-    if (confirm('Isso substituirá TODOS os dados atuais pelos dados do arquivo. Continuar?')) {
-      // Import data
-      setCategories(importedData.categories || categories);
-      setItems(importedData.items || items);
-      setSettings(importedData.settings || settings);
+    // Import data
+    console.log('Importing categories:', importedData.categories.length);
+    console.log('Importing items:', importedData.items.length);
+    console.log('Importing settings:', importedData.settings);
+    
+    setCategories(importedData.categories);
+    setItems(importedData.items);
+    setSettings(importedData.settings);
+    if (importedData.orders) {
+      setOrders(importedData.orders);
+    }
+    
+    // Save to localStorage immediately
+    try {
+      localStorage.setItem('minas_v2_categories', JSON.stringify(importedData.categories));
+      localStorage.setItem('minas_v2_items', JSON.stringify(importedData.items));
+      localStorage.setItem('minas_v2_settings', JSON.stringify(importedData.settings));
       if (importedData.orders) {
-        setOrders(importedData.orders || orders);
+        localStorage.setItem('minas_v2_orders', JSON.stringify(importedData.orders));
       }
       
-      // Save to localStorage immediately
-      try {
-        localStorage.setItem('minas_v2_categories', JSON.stringify(importedData.categories || categories));
-        localStorage.setItem('minas_v2_items', JSON.stringify(importedData.items || items));
-        localStorage.setItem('minas_v2_settings', JSON.stringify(importedData.settings || settings));
-        if (importedData.orders) {
-          localStorage.setItem('minas_v2_orders', JSON.stringify(importedData.orders || orders));
-        }
-        
-        alert('Dados importados com sucesso! A página será recarregada.');
-        setTimeout(() => window.location.reload(), 1000);
-        return true;
-      } catch (error) {
-        console.error('Error saving imported data:', error);
-        if (error instanceof DOMException && error.name === 'QuotaExceededError') {
-          alert('Armazenamento cheio! Alguns dados podem não ter sido salvos. Tente limpar o armazenamento primeiro.');
-        } else {
-          alert('Erro ao salvar dados importados. Tente novamente.');
-        }
-        return false;
+      console.log('Data saved to localStorage successfully');
+      alert('✅ Dados importados com sucesso!\n\nA página será recarregada em 1 segundo...');
+      setTimeout(() => window.location.reload(), 1000);
+      return true;
+    } catch (error) {
+      console.error('Error saving imported data:', error);
+      if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+        alert('Armazenamento cheio! Alguns dados podem não ter sido salvos. Tente limpar o armazenamento primeiro.');
+      } else {
+        alert('Erro ao salvar dados importados. Tente novamente.');
       }
+      return false;
     }
-    return false;
   };
 
   // Import data from JSON file
@@ -722,14 +724,49 @@ function App() {
   // Import data from pasted JSON
   const importFromPaste = () => {
     const jsonText = prompt('Cole o JSON exportado aqui:');
-    if (!jsonText) return;
+    if (!jsonText || jsonText.trim().length === 0) {
+      alert('Nenhum texto foi colado. Tente novamente.');
+      return;
+    }
+    
+    console.log('Pasted JSON length:', jsonText.length);
+    console.log('Pasted JSON preview:', jsonText.substring(0, 100));
     
     try {
-      const importedData = JSON.parse(jsonText);
-      processImportedData(importedData);
+      const importedData = JSON.parse(jsonText.trim());
+      console.log('Parsed data:', importedData);
+      
+      // Validate structure
+      if (!importedData.categories || !Array.isArray(importedData.categories)) {
+        alert('Erro: O JSON não contém categorias válidas.');
+        return;
+      }
+      if (!importedData.items || !Array.isArray(importedData.items)) {
+        alert('Erro: O JSON não contém itens válidos.');
+        return;
+      }
+      if (!importedData.settings || typeof importedData.settings !== 'object') {
+        alert('Erro: O JSON não contém configurações válidas.');
+        return;
+      }
+      
+      // Show summary before importing
+      const summary = `Dados encontrados:\n\n` +
+        `• ${importedData.categories.length} categoria(s)\n` +
+        `• ${importedData.items.length} item(ns)\n` +
+        `• Configurações: ${importedData.settings.name || 'N/A'}\n\n` +
+        `Isso substituirá TODOS os dados atuais. Continuar?`;
+      
+      if (confirm(summary)) {
+        processImportedData(importedData);
+        alert('✅ Dados importados com sucesso!\n\nRecarregue a página para ver as alterações.');
+      } else {
+        alert('Importação cancelada.');
+      }
     } catch (error) {
       console.error('Error parsing pasted JSON:', error);
-      alert('Erro ao processar JSON. Certifique-se de que o texto está completo e válido.');
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      alert(`Erro ao processar JSON:\n\n${errorMsg}\n\nCertifique-se de que:\n• O texto está completo\n• Não há espaços extras no início/fim\n• O JSON está válido`);
     }
   };
 
