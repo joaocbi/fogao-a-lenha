@@ -395,6 +395,94 @@ function App() {
     ? items 
     : items.filter(i => i.category === activeCategory);
 
+  // Export all data to JSON file
+  const exportData = () => {
+    try {
+      const exportData = {
+        categories: categories,
+        items: items,
+        settings: settings,
+        orders: orders,
+        exportDate: new Date().toISOString(),
+        version: '2.0'
+      };
+      
+      const dataStr = JSON.stringify(exportData, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `minas-backup-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      alert('Dados exportados com sucesso! Salve este arquivo em local seguro.');
+    } catch (error) {
+      console.error('Error exporting data:', error);
+      alert('Erro ao exportar dados. Tente novamente.');
+    }
+  };
+
+  // Import data from JSON file
+  const importData = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const importedData = JSON.parse(event.target?.result as string);
+          
+          if (!importedData.categories || !importedData.items || !importedData.settings) {
+            alert('Arquivo inválido. Certifique-se de que é um backup válido do sistema.');
+            return;
+          }
+          
+          if (confirm('Isso substituirá TODOS os dados atuais pelos dados do arquivo. Continuar?')) {
+            // Import data
+            setCategories(importedData.categories || categories);
+            setItems(importedData.items || items);
+            setSettings(importedData.settings || settings);
+            if (importedData.orders) {
+              setOrders(importedData.orders || orders);
+            }
+            
+            // Save to localStorage immediately
+            try {
+              localStorage.setItem('minas_v2_categories', JSON.stringify(importedData.categories || categories));
+              localStorage.setItem('minas_v2_items', JSON.stringify(importedData.items || items));
+              localStorage.setItem('minas_v2_settings', JSON.stringify(importedData.settings || settings));
+              if (importedData.orders) {
+                localStorage.setItem('minas_v2_orders', JSON.stringify(importedData.orders || orders));
+              }
+              
+              alert('Dados importados com sucesso! A página será recarregada.');
+              setTimeout(() => window.location.reload(), 1000);
+            } catch (error) {
+              console.error('Error saving imported data:', error);
+              if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+                alert('Armazenamento cheio! Alguns dados podem não ter sido salvos. Tente limpar o armazenamento primeiro.');
+              } else {
+                alert('Erro ao salvar dados importados. Tente novamente.');
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error importing data:', error);
+          alert('Erro ao importar dados. Certifique-se de que o arquivo é um JSON válido.');
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  };
+
   return (
     <div className="min-h-screen font-sans bg-orange-50 text-stone-900 selection:bg-orange-200 selection:text-orange-900">
       {/* Header */}
@@ -1426,49 +1514,65 @@ function App() {
                         >
                           <Save size={20} /> Salvar Alterações
                         </button>
-                        <button 
-                          onClick={() => {
-                            if (confirm('Isso limpará pedidos antigos e imagens grandes para liberar espaço, mas manterá suas configurações. Continuar?')) {
-                              try {
-                                // Keep only last 5 orders
-                                const recentOrders = orders.slice(0, 5);
-                                localStorage.setItem('minas_v2_orders', JSON.stringify(recentOrders));
-                                setOrders(recentOrders);
-                                
-                                // Remove large images from items
-                                const cleanedItems = items.map(item => ({
-                                  ...item,
-                                  image: item.image && item.image.length > 500000 ? undefined : item.image
-                                }));
-                                localStorage.setItem('minas_v2_items', JSON.stringify(cleanedItems));
-                                setItems(cleanedItems);
-                                
-                                // Remove old localStorage keys
-                                const oldKeys = ['minas_settings', 'minas_categories', 'minas_items', 'minas_orders'];
-                                oldKeys.forEach(key => localStorage.removeItem(key));
-                                
-                                alert('Armazenamento limpo! Pedidos antigos e imagens grandes foram removidos.');
-                              } catch (error) {
-                                console.error('Error cleaning storage:', error);
-                                alert('Erro ao limpar armazenamento. Tente novamente.');
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <button 
+                            onClick={exportData}
+                            className="px-8 py-5 bg-green-50 text-green-600 font-black uppercase tracking-widest rounded-[1.5rem] hover:bg-green-100 transition-all active:scale-95 flex items-center justify-center gap-2"
+                          >
+                            <Save size={16} /> Exportar Dados
+                          </button>
+                          <button 
+                            onClick={importData}
+                            className="px-8 py-5 bg-purple-50 text-purple-600 font-black uppercase tracking-widest rounded-[1.5rem] hover:bg-purple-100 transition-all active:scale-95 flex items-center justify-center gap-2"
+                          >
+                            <Upload size={16} /> Importar Dados
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <button 
+                            onClick={() => {
+                              if (confirm('Isso limpará pedidos antigos e imagens grandes para liberar espaço, mas manterá suas configurações. Continuar?')) {
+                                try {
+                                  // Keep only last 5 orders
+                                  const recentOrders = orders.slice(0, 5);
+                                  localStorage.setItem('minas_v2_orders', JSON.stringify(recentOrders));
+                                  setOrders(recentOrders);
+                                  
+                                  // Remove large images from items
+                                  const cleanedItems = items.map(item => ({
+                                    ...item,
+                                    image: item.image && item.image.length > 500000 ? undefined : item.image
+                                  }));
+                                  localStorage.setItem('minas_v2_items', JSON.stringify(cleanedItems));
+                                  setItems(cleanedItems);
+                                  
+                                  // Remove old localStorage keys
+                                  const oldKeys = ['minas_settings', 'minas_categories', 'minas_items', 'minas_orders'];
+                                  oldKeys.forEach(key => localStorage.removeItem(key));
+                                  
+                                  alert('Armazenamento limpo! Pedidos antigos e imagens grandes foram removidos.');
+                                } catch (error) {
+                                  console.error('Error cleaning storage:', error);
+                                  alert('Erro ao limpar armazenamento. Tente novamente.');
+                                }
                               }
-                            }
-                          }}
-                          className="px-12 py-6 bg-blue-50 text-blue-600 font-black uppercase tracking-widest rounded-[1.5rem] hover:bg-blue-100 transition-all active:scale-95"
-                        >
-                          Limpar Armazenamento
-                        </button>
-                        <button 
-                          onClick={() => {
-                            if (confirm('Isso apagará TODAS as suas personalizações e voltará aos dados padrão. Continuar?')) {
-                              localStorage.clear();
-                              window.location.reload();
-                            }
-                          }}
-                          className="px-12 py-6 bg-red-50 text-red-500 font-black uppercase tracking-widest rounded-[1.5rem] hover:bg-red-100 transition-all active:scale-95"
-                        >
-                          Resetar Tudo
-                        </button>
+                            }}
+                            className="px-8 py-5 bg-blue-50 text-blue-600 font-black uppercase tracking-widest rounded-[1.5rem] hover:bg-blue-100 transition-all active:scale-95"
+                          >
+                            Limpar Armazenamento
+                          </button>
+                          <button 
+                            onClick={() => {
+                              if (confirm('Isso apagará TODAS as suas personalizações e voltará aos dados padrão. Continuar?')) {
+                                localStorage.clear();
+                                window.location.reload();
+                              }
+                            }}
+                            className="px-8 py-5 bg-red-50 text-red-500 font-black uppercase tracking-widest rounded-[1.5rem] hover:bg-red-100 transition-all active:scale-95"
+                          >
+                            Resetar Tudo
+                          </button>
+                        </div>
                       </div>
                     </div>
                   )}
