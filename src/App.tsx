@@ -953,7 +953,7 @@ function App() {
               </div>
             )}
             <div className="flex flex-col justify-center min-w-0 flex-1 overflow-hidden pr-1 sm:pr-2">
-              <h1 className="text-[11px] sm:text-lg md:text-2xl font-black text-orange-900 leading-tight sm:leading-none tracking-tight mb-0">{settings.name || 'Fogão & Sabor'}</h1>
+              <h1 className="text-[11px] sm:text-lg md:text-2xl font-black text-orange-900 leading-tight sm:leading-none tracking-tight mb-0.5 sm:mb-1">{settings.name || 'Fogão & Sabor'}</h1>
               <p className="text-[8px] sm:text-[11px] text-green-700 font-bold tracking-[0.1em] sm:tracking-[0.2em] uppercase">Comida Caseira</p>
             </div>
           </div>
