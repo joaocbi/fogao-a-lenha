@@ -2067,6 +2067,32 @@ function App() {
                           />
                         </div>
 
+                        <div className="space-y-4">
+                          <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.3em] flex items-center gap-2">
+                            <Clock size={14} className="text-orange-700" /> Horários de Funcionamento
+                          </label>
+                          <div className="space-y-3 p-6 bg-stone-50/50 rounded-3xl border border-stone-100">
+                            {Object.entries(settings.openingHours || {}).map(([day, hours]) => (
+                              <div key={day} className="flex items-center gap-3">
+                                <label className="w-32 text-[9px] font-black text-stone-600 uppercase tracking-widest shrink-0">
+                                  {day}:
+                                </label>
+                                <input
+                                  type="text"
+                                  value={hours}
+                                  onChange={(e) => {
+                                    const updatedHours = { ...settings.openingHours };
+                                    updatedHours[day] = e.target.value;
+                                    setSettings({ ...settings, openingHours: updatedHours });
+                                  }}
+                                  placeholder="Ex: 11:00 às 22:00"
+                                  className="flex-1 px-4 py-3 rounded-xl border border-stone-100 focus:outline-none focus:ring-2 focus:ring-orange-700/20 bg-white font-bold text-stone-900 text-sm"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="p-8 bg-stone-50/50 rounded-[2rem] border border-stone-100 space-y-4">
                               <label className="flex items-center gap-3 text-[10px] font-black text-stone-400 uppercase tracking-[0.3em]">
