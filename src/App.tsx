@@ -1734,9 +1734,9 @@ function App() {
                               <ImageIcon size={14} className="text-orange-700" /> Logo da Marca
                             </label>
                             <div className="flex items-center gap-6 p-6 bg-stone-50/50 rounded-3xl border border-stone-100">
-                              <div className="w-20 h-20 bg-white rounded-2xl border border-stone-200 flex items-center justify-center overflow-hidden shrink-0">
+                              <div className="w-20 h-20 bg-white rounded-2xl border border-stone-200 flex items-center justify-center overflow-hidden shrink-0 p-2">
                                 {settings.logo ? (
-                                  <img src={settings.logo} className="w-full h-full object-contain" alt="Logo" />
+                                  <img src={settings.logo} className="w-full h-full object-contain object-center" alt="Logo" style={{ maxWidth: '100%', maxHeight: '100%' }} />
                                 ) : (
                                   <ImageIcon size={24} className="text-stone-200" />
                                 )}
