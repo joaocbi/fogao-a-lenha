@@ -863,28 +863,59 @@ function App() {
               initial={{ scale: 0.9, opacity: 0, y: 20 }} 
               animate={{ scale: 1, opacity: 1, y: 0 }} 
               exit={{ scale: 0.9, opacity: 0, y: 20 }} 
-              className="relative w-full max-w-7xl bg-white rounded-[3rem] h-full max-h-[900px] flex flex-col shadow-2xl overflow-hidden border border-white/20"
+              className="relative w-full max-w-7xl bg-white rounded-2xl sm:rounded-[3rem] h-full max-h-[900px] flex flex-col shadow-2xl overflow-hidden border border-white/20"
             >
-              <div className="p-10 border-b border-stone-100 flex items-center justify-between bg-stone-50/50">
-                <div className="flex items-center gap-6">
-                  <div className="w-16 h-16 bg-orange-700 rounded-3xl flex items-center justify-center text-white shadow-2xl rotate-3">
-                    <Settings size={32} />
+              <div className="p-4 sm:p-6 md:p-10 border-b border-stone-100 flex items-center justify-between bg-stone-50/50">
+                <div className="flex items-center gap-3 sm:gap-6 min-w-0 flex-1">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-orange-700 rounded-2xl sm:rounded-3xl flex items-center justify-center text-white shadow-2xl rotate-3 flex-shrink-0">
+                    <Settings size={24} className="sm:w-8 sm:h-8" />
                   </div>
-                  <div>
-                    <h3 className="text-4xl font-black text-stone-900 tracking-tighter">Painel de Controle</h3>
-                    <p className="text-stone-400 font-bold uppercase text-[10px] tracking-widest mt-1">Gestão Administrativa do Restaurante</p>
+                  <div className="min-w-0">
+                    <h3 className="text-xl sm:text-3xl md:text-4xl font-black text-stone-900 tracking-tighter truncate">Painel de Controle</h3>
+                    <p className="text-stone-400 font-bold uppercase text-[9px] sm:text-[10px] tracking-widest mt-1 hidden sm:block">Gestão Administrativa do Restaurante</p>
                   </div>
                 </div>
                 <button 
                   onClick={() => setIsAdminOpen(false)} 
-                  className="w-14 h-14 bg-white hover:bg-red-50 text-stone-400 hover:text-red-500 rounded-2xl transition-all shadow-xl flex items-center justify-center active:scale-90"
+                  className="w-10 h-10 sm:w-14 sm:h-14 bg-white hover:bg-red-50 text-stone-400 hover:text-red-500 rounded-xl sm:rounded-2xl transition-all shadow-xl flex items-center justify-center active:scale-90 flex-shrink-0"
                 >
-                  <X size={28} />
+                  <X size={20} className="sm:w-7 sm:h-7" />
                 </button>
               </div>
 
+              {/* Mobile Tabs - Horizontal */}
+              <div className="md:hidden border-b border-stone-100 bg-stone-50/30 overflow-x-auto no-scrollbar">
+                <div className="flex gap-2 p-3">
+                  {[
+                    { id: 'orders', icon: ShoppingCart, label: 'Pedidos' },
+                    { id: 'items', icon: MenuIcon, label: 'Cardápio' },
+                    { id: 'categories', icon: Plus, label: 'Categorias' },
+                    { id: 'settings', icon: Settings, label: 'Configurações' }
+                  ].map(tab => (
+                    <button 
+                      key={tab.id}
+                      onClick={() => setAdminTab(tab.id as 'items' | 'categories' | 'orders' | 'settings')} 
+                      className={`flex items-center gap-2 px-4 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all whitespace-nowrap flex-shrink-0 ${
+                        adminTab === tab.id 
+                          ? 'bg-orange-700 text-white shadow-lg shadow-orange-700/30' 
+                          : 'text-stone-400 hover:text-stone-800 hover:bg-white hover:shadow-md'
+                      }`}
+                    >
+                      <tab.icon size={16} />
+                      <span className="hidden sm:inline">{tab.label}</span>
+                      {tab.id === 'orders' && orders.filter(o => o.status === 'pending').length > 0 && (
+                        <span className={`${adminTab === tab.id ? 'bg-white text-orange-700' : 'bg-orange-700 text-white'} w-5 h-5 rounded-full flex items-center justify-center text-[9px] shadow-lg`}>
+                          {orders.filter(o => o.status === 'pending').length}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div className="flex flex-1 overflow-hidden">
-                <aside className="w-80 border-r border-stone-100 p-8 flex flex-col gap-3 bg-stone-50/30">
+                {/* Desktop Sidebar */}
+                <aside className="hidden md:flex w-80 border-r border-stone-100 p-8 flex-col gap-3 bg-stone-50/30">
                   {[
                     { id: 'orders', icon: ShoppingCart, label: 'Pedidos' },
                     { id: 'items', icon: MenuIcon, label: 'Cardápio' },
@@ -920,7 +951,7 @@ function App() {
                   </div>
                 </aside>
 
-                <main className="flex-1 overflow-y-auto p-12 bg-white">
+                <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-12 bg-white">
                   {adminTab === 'orders' && (
                     <div className="space-y-10">
                       <div className="flex justify-between items-end">
@@ -1208,13 +1239,20 @@ function App() {
                   )}
 
                   {adminTab === 'settings' && (
-                    <div className="max-w-3xl space-y-12">
-                      <div className="flex justify-between items-center">
+                    <div className="max-w-3xl space-y-6 sm:space-y-12">
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div>
-                          <h4 className="text-4xl font-black text-stone-900 tracking-tighter mb-2">Configurações</h4>
-                          <p className="text-stone-400 font-bold text-xs uppercase tracking-widest">Informações públicas do restaurante</p>
+                          <h4 className="text-2xl sm:text-3xl md:text-4xl font-black text-stone-900 tracking-tighter mb-2">Configurações</h4>
+                          <p className="text-stone-400 font-bold text-[10px] sm:text-xs uppercase tracking-widest">Informações públicas do restaurante</p>
                         </div>
-                        <div className="flex gap-4">
+                        {/* Mobile Sair Button */}
+                        <button 
+                          onClick={() => setIsAdminOpen(false)}
+                          className="sm:hidden flex items-center gap-2 px-4 py-2 rounded-xl font-black uppercase text-[10px] tracking-widest text-red-500 hover:bg-red-50 transition-all"
+                        >
+                          <LogOut size={16} /> Sair
+                        </button>
+                        <div className="flex gap-2 sm:gap-4">
                           <button 
                             onClick={() => {
                               localStorage.setItem('minas_v2_settings', JSON.stringify(settings));
@@ -1222,9 +1260,9 @@ function App() {
                               localStorage.setItem('minas_v2_items', JSON.stringify(items));
                               alert('Todas as alterações foram salvas com sucesso!');
                             }}
-                            className="px-8 py-4 bg-green-600 hover:bg-green-700 text-white font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-green-600/20 transition-all active:scale-95 flex items-center gap-2 text-xs"
+                            className="px-4 sm:px-8 py-2 sm:py-4 bg-green-600 hover:bg-green-700 text-white font-black uppercase tracking-widest rounded-xl sm:rounded-2xl shadow-xl shadow-green-600/20 transition-all active:scale-95 flex items-center gap-2 text-[10px] sm:text-xs"
                           >
-                            <Save size={18} /> Salvar Tudo
+                            <Save size={14} className="sm:w-[18px] sm:h-[18px]" /> Salvar Tudo
                           </button>
                         </div>
                       </div>
