@@ -513,7 +513,7 @@ function App() {
           try {
             document.execCommand('copy');
             alert('Dados copiados! Agora cole no celular usando o botão "Colar JSON".');
-          } catch (e) {
+          } catch {
             prompt('Copie este texto:', dataStr);
           }
           document.body.removeChild(textarea);
@@ -562,7 +562,7 @@ function App() {
     };
     
     // First attempt: try to get everything at once
-    let firstInput = prompt('Cole o máximo que conseguir do WhatsApp:\n\n(Pode ser o cabeçalho, uma parte, ou várias partes juntas)\n\nSe não conseguir copiar tudo, cole o que conseguir e depois continuaremos.');
+    const firstInput = prompt('Cole o máximo que conseguir do WhatsApp:\n\n(Pode ser o cabeçalho, uma parte, ou várias partes juntas)\n\nSe não conseguir copiar tudo, cole o que conseguir e depois continuaremos.');
     
     if (!firstInput) return;
     
@@ -650,7 +650,12 @@ function App() {
   };
 
   // Helper function to process imported data
-  const processImportedData = (importedData: any) => {
+  const processImportedData = (importedData: {
+    categories?: Category[];
+    items?: MenuItem[];
+    settings?: RestaurantSettings;
+    orders?: Order[];
+  }) => {
     if (!importedData.categories || !importedData.items || !importedData.settings) {
       alert('Arquivo inválido. Certifique-se de que é um backup válido do sistema.');
       return false;
