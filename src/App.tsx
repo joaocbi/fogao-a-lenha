@@ -943,8 +943,8 @@ function App() {
     <div className="min-h-screen font-sans bg-orange-50 text-stone-900 selection:bg-orange-200 selection:text-orange-900">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md shadow-sm border-b border-orange-100">
-        <div className="container mx-auto px-2 sm:px-4 h-14 sm:h-20 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5 sm:gap-4 min-w-0 flex-1 overflow-hidden">
+        <div className="container mx-auto px-3 sm:px-6 md:px-8 h-14 sm:h-20 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1 overflow-hidden">
             {settings.logo ? (
               <img src={settings.logo} alt={settings.name || 'Logo'} className="w-10 h-10 sm:w-16 sm:h-16 object-contain rounded-lg sm:rounded-xl flex-shrink-0" />
             ) : (
@@ -952,9 +952,9 @@ function App() {
                 {(settings.name || 'Fogão & Sabor').split(' ').filter(Boolean).map(n => n[0] || '').join('').slice(0, 2).toUpperCase()}
               </div>
             )}
-            <div className="flex flex-col justify-center min-w-0 flex-1 overflow-hidden">
-              <h1 className="text-[10px] sm:text-lg md:text-2xl font-black text-orange-900 leading-tight sm:leading-none tracking-tight mb-0 truncate">{settings.name || 'Fogão & Sabor'}</h1>
-              <p className="text-[7px] sm:text-[11px] text-green-700 font-bold tracking-[0.1em] sm:tracking-[0.2em] uppercase truncate">Comida Caseira</p>
+            <div className="flex flex-col justify-center min-w-0 flex-1 overflow-hidden pr-1 sm:pr-2">
+              <h1 className="text-[11px] sm:text-lg md:text-2xl font-black text-orange-900 leading-tight sm:leading-none tracking-tight mb-0">{settings.name || 'Fogão & Sabor'}</h1>
+              <p className="text-[8px] sm:text-[11px] text-green-700 font-bold tracking-[0.1em] sm:tracking-[0.2em] uppercase">Comida Caseira</p>
             </div>
           </div>
 
