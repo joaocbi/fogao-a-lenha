@@ -1997,6 +1997,109 @@ function App() {
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                             <button 
                               onClick={() => {
+                                try {
+                                  // Analyze localStorage
+                                  let totalSize = 0;
+                                  const storageInfo: { key: string; size: number; sizeKB: string; items?: number }[] = [];
+                                  
+                                  // Check all localStorage keys
+                                  for (let i = 0; i < localStorage.length; i++) {
+                                    const key = localStorage.key(i);
+                                    if (key) {
+                                      const value = localStorage.getItem(key) || '';
+                                      const size = new Blob([value]).size;
+                                      const sizeKB = (size / 1024).toFixed(2);
+                                      totalSize += size;
+                                      
+                                      // Try to parse and count items if it's our data
+                                      let itemCount: number | undefined;
+                                      try {
+                                        const parsed = JSON.parse(value);
+                                        if (Array.isArray(parsed)) {
+                                          itemCount = parsed.length;
+                                        } else if (parsed && typeof parsed === 'object') {
+                                          // Count keys in object
+                                          itemCount = Object.keys(parsed).length;
+                                        }
+                                      } catch {
+                                        // Not JSON, ignore
+                                      }
+                                      
+                                      storageInfo.push({
+                                        key,
+                                        size,
+                                        sizeKB,
+                                        items: itemCount
+                                      });
+                                    }
+                                  }
+                                  
+                                  const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
+                                  const totalSizeKB = (totalSize / 1024).toFixed(2);
+                                  
+                                  // Check our specific keys
+                                  const ourKeys = ['minas_v2_categories', 'minas_v2_items', 'minas_v2_settings', 'minas_v2_orders'];
+                                  const ourDataStatus: string[] = [];
+                                  
+                                  ourKeys.forEach(key => {
+                                    const value = localStorage.getItem(key);
+                                    if (value) {
+                                      try {
+                                        const parsed = JSON.parse(value);
+                                        if (Array.isArray(parsed)) {
+                                          ourDataStatus.push(`✅ ${key}: ${parsed.length} item(s)`);
+                                        } else if (parsed && typeof parsed === 'object') {
+                                          if (key === 'minas_v2_settings') {
+                                            ourDataStatus.push(`✅ ${key}: ${parsed.name || 'Sem nome'}`);
+                                          } else {
+                                            ourDataStatus.push(`✅ ${key}: Existe`);
+                                          }
+                                        }
+                                      } catch {
+                                        ourDataStatus.push(`⚠️ ${key}: Inválido`);
+                                      }
+                                    } else {
+                                      ourDataStatus.push(`❌ ${key}: Não existe`);
+                                    }
+                                  });
+                                  
+                                  // Build debug message
+                                  let debugMessage = `🔍 DEBUG: Estado do localStorage\n\n`;
+                                  debugMessage += `📊 Tamanho Total: ${totalSizeMB} MB (${totalSizeKB} KB)\n\n`;
+                                  debugMessage += `📦 Nossos Dados:\n${ourDataStatus.join('\n')}\n\n`;
+                                  debugMessage += `📋 Todas as Chaves (${storageInfo.length}):\n`;
+                                  
+                                  storageInfo
+                                    .sort((a, b) => b.size - a.size)
+                                    .forEach(info => {
+                                      const itemInfo = info.items !== undefined ? ` (${info.items} itens)` : '';
+                                      debugMessage += `  • ${info.key}: ${info.sizeKB} KB${itemInfo}\n`;
+                                    });
+                                  
+                                  debugMessage += `\n🌐 Ambiente: ${window.location.hostname}\n`;
+                                  debugMessage += `📱 Viewport: ${window.innerWidth}x${window.innerHeight}px\n`;
+                                  debugMessage += `💾 Quota Disponível: ~${((5 * 1024 * 1024 - totalSize) / (1024 * 1024)).toFixed(2)} MB (estimado)`;
+                                  
+                                  // Show in alert (may be truncated if too long)
+                                  if (debugMessage.length > 2000) {
+                                    // If too long, show in console and alert with summary
+                                    console.log('=== DEBUG LOCALSTORAGE ===');
+                                    console.log(debugMessage);
+                                    alert(`Debug completo no console (F12)\n\nResumo:\n\nTamanho Total: ${totalSizeMB} MB\n\nNossos Dados:\n${ourDataStatus.join('\n')}\n\nAbra o console para ver detalhes completos.`);
+                                  } else {
+                                    alert(debugMessage);
+                                  }
+                                } catch (error) {
+                                  console.error('Error analyzing localStorage:', error);
+                                  alert('Erro ao analisar localStorage. Veja o console (F12) para detalhes.');
+                                }
+                              }}
+                              className="px-4 sm:px-8 py-3 sm:py-5 bg-purple-50 text-purple-600 font-black uppercase tracking-widest rounded-xl sm:rounded-[1.5rem] hover:bg-purple-100 transition-all active:scale-95 text-xs sm:text-sm"
+                            >
+                              🔍 Debug localStorage
+                            </button>
+                            <button 
+                              onClick={() => {
                                 if (confirm('Isso limpará pedidos antigos e imagens grandes para liberar espaço, mas manterá suas configurações. Continuar?')) {
                                   try {
                                     // Keep only last 5 orders
