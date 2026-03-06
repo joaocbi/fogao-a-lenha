@@ -200,7 +200,7 @@ function App() {
     }
   };
 
-  const loadFromCloud = async () => {
+  const loadFromCloud = async (preserveLocalImages = false) => {
     try {
       const response = await fetch(getApiUrl());
       const result = await response.json();
@@ -208,20 +208,45 @@ function App() {
       if (result.success && result.data) {
         const cloudData = result.data;
         
-        // Only update if cloud data exists and is newer
+        // Only update if cloud data exists
         if (cloudData.categories && cloudData.items && cloudData.settings) {
+          // Merge with local data if preserveLocalImages is true
+          let mergedItems = cloudData.items;
+          let mergedSettings = cloudData.settings;
+          
+          if (preserveLocalImages) {
+            // Preserve local images in items
+            mergedItems = cloudData.items.map((cloudItem: MenuItem) => {
+              const localItem = items.find(item => item.id === cloudItem.id);
+              return {
+                ...cloudItem,
+                image: localItem?.image || cloudItem.image || '' // Keep local image if exists
+              };
+            });
+            
+            // Preserve local images in settings
+            mergedSettings = {
+              ...cloudData.settings,
+              logo: settings.logo || cloudData.settings.logo || '',
+              heroVideo: settings.heroVideo || cloudData.settings.heroVideo || '',
+              heroImage: settings.heroImage || cloudData.settings.heroImage || '',
+              aboutImage1: settings.aboutImage1 || cloudData.settings.aboutImage1 || '',
+              aboutImage2: settings.aboutImage2 || cloudData.settings.aboutImage2 || ''
+            };
+          }
+          
           setCategories(cloudData.categories);
-          setItems(cloudData.items);
-          setSettings(cloudData.settings);
+          setItems(mergedItems);
+          setSettings(mergedSettings);
           if (cloudData.orders) {
             setOrders(cloudData.orders);
           }
           
-          // Also save to localStorage
+          // Also save merged data to localStorage
           try {
             localStorage.setItem('minas_v2_categories', JSON.stringify(cloudData.categories));
-            localStorage.setItem('minas_v2_items', JSON.stringify(cloudData.items));
-            localStorage.setItem('minas_v2_settings', JSON.stringify(cloudData.settings));
+            localStorage.setItem('minas_v2_items', JSON.stringify(mergedItems));
+            localStorage.setItem('minas_v2_settings', JSON.stringify(mergedSettings));
             if (cloudData.orders) {
               localStorage.setItem('minas_v2_orders', JSON.stringify(cloudData.orders));
             }
@@ -229,7 +254,7 @@ function App() {
             console.error('Error saving to localStorage:', e);
           }
           
-          console.log('Data loaded from cloud successfully');
+          console.log('Data loaded from cloud successfully', preserveLocalImages ? '(preserved local images)' : '');
           return true;
         }
       }
@@ -240,11 +265,11 @@ function App() {
     }
   };
 
-  // Load from cloud on mount
+  // Load from cloud on mount - preserve local images
   useEffect(() => {
-    loadFromCloud().then((loaded) => {
+    loadFromCloud(true).then((loaded) => {
       if (loaded) {
-        console.log('Initial data loaded from cloud');
+        console.log('Initial data loaded from cloud (local images preserved)');
       } else {
         console.log('No cloud data found, using localStorage');
       }
@@ -2038,10 +2063,11 @@ function App() {
                               </button>
                               <button 
                                 onClick={async () => {
+                                  const preserve = confirm('Deseja preservar as imagens locais ao carregar da nuvem?\n\nSim = Mantém suas imagens locais\nNão = Substitui tudo pelos dados da nuvem');
                                   alert('Carregando dados da nuvem...');
-                                  const success = await loadFromCloud();
+                                  const success = await loadFromCloud(preserve);
                                   if (success) {
-                                    alert('✅ Dados carregados da nuvem com sucesso!\n\nA página será recarregada.');
+                                    alert(`✅ Dados carregados da nuvem com sucesso!\n\n${preserve ? 'Imagens locais foram preservadas.' : 'Todos os dados foram substituídos.'}\n\nA página será recarregada.`);
                                     setTimeout(() => window.location.reload(), 1000);
                                   } else {
                                     alert('❌ Nenhum dado encontrado na nuvem ou erro ao carregar.');
