@@ -1607,86 +1607,96 @@ function App() {
                         </div>
                       </div>
 
-                      <div className="pt-12 border-t border-stone-100 flex gap-4">
-                        <button 
-                          onClick={() => {
-                            localStorage.setItem('minas_v2_settings', JSON.stringify(settings));
-                            localStorage.setItem('minas_v2_categories', JSON.stringify(categories));
-                            localStorage.setItem('minas_v2_items', JSON.stringify(items));
-                            alert('Todas as alterações foram salvas com sucesso!');
-                          }}
-                          className="px-12 py-6 bg-green-600 hover:bg-green-700 text-white font-black uppercase tracking-widest rounded-[1.5rem] shadow-2xl shadow-green-600/30 transition-all active:scale-95 flex items-center gap-4"
-                        >
-                          <Save size={20} /> Salvar Alterações
-                        </button>
-                        <div className="space-y-4">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="pt-8 sm:pt-12 border-t border-stone-100 space-y-6 sm:space-y-8">
+                        <div>
+                          <h5 className="text-lg sm:text-xl font-black text-stone-900 mb-4 uppercase tracking-widest text-xs">Sincronização de Dados</h5>
+                          <div className="space-y-3 sm:space-y-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                              <button 
+                                onClick={exportData}
+                                className="px-4 sm:px-8 py-3 sm:py-5 bg-green-50 text-green-600 font-black uppercase tracking-widest rounded-xl sm:rounded-[1.5rem] hover:bg-green-100 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs sm:text-sm"
+                              >
+                                <Save size={14} className="sm:w-4 sm:h-4" /> Exportar Dados
+                              </button>
+                              <button 
+                                onClick={importData}
+                                className="px-4 sm:px-8 py-3 sm:py-5 bg-purple-50 text-purple-600 font-black uppercase tracking-widest rounded-xl sm:rounded-[1.5rem] hover:bg-purple-100 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs sm:text-sm"
+                              >
+                                <Upload size={14} className="sm:w-4 sm:h-4" /> Importar Arquivo
+                              </button>
+                            </div>
                             <button 
-                              onClick={exportData}
-                              className="px-8 py-5 bg-green-50 text-green-600 font-black uppercase tracking-widest rounded-[1.5rem] hover:bg-green-100 transition-all active:scale-95 flex items-center justify-center gap-2"
+                              onClick={importFromPaste}
+                              className="w-full px-4 sm:px-8 py-3 sm:py-5 bg-blue-50 text-blue-600 font-black uppercase tracking-widest rounded-xl sm:rounded-[1.5rem] hover:bg-blue-100 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs sm:text-sm"
                             >
-                              <Save size={16} /> Exportar Dados
+                              <MessageCircle size={14} className="sm:w-4 sm:h-4" /> Colar JSON (Sincronizar)
+                            </button>
+                            <p className="text-[10px] sm:text-xs text-stone-400 text-center px-2">
+                              💡 Dica: Exporte no localhost, copie o JSON e cole aqui para sincronizar entre navegadores
+                            </p>
+                          </div>
+                        </div>
+
+                        <div>
+                          <h5 className="text-lg sm:text-xl font-black text-stone-900 mb-4 uppercase tracking-widest text-xs">Manutenção</h5>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                            <button 
+                              onClick={() => {
+                                if (confirm('Isso limpará pedidos antigos e imagens grandes para liberar espaço, mas manterá suas configurações. Continuar?')) {
+                                  try {
+                                    // Keep only last 5 orders
+                                    const recentOrders = orders.slice(0, 5);
+                                    localStorage.setItem('minas_v2_orders', JSON.stringify(recentOrders));
+                                    setOrders(recentOrders);
+                                    
+                                    // Remove large images from items
+                                    const cleanedItems = items.map(item => ({
+                                      ...item,
+                                      image: item.image && item.image.length > 500000 ? undefined : item.image
+                                    }));
+                                    localStorage.setItem('minas_v2_items', JSON.stringify(cleanedItems));
+                                    setItems(cleanedItems);
+                                    
+                                    // Remove old localStorage keys
+                                    const oldKeys = ['minas_settings', 'minas_categories', 'minas_items', 'minas_orders'];
+                                    oldKeys.forEach(key => localStorage.removeItem(key));
+                                    
+                                    alert('Armazenamento limpo! Pedidos antigos e imagens grandes foram removidos.');
+                                  } catch (error) {
+                                    console.error('Error cleaning storage:', error);
+                                    alert('Erro ao limpar armazenamento. Tente novamente.');
+                                  }
+                                }
+                              }}
+                              className="px-4 sm:px-8 py-3 sm:py-5 bg-blue-50 text-blue-600 font-black uppercase tracking-widest rounded-xl sm:rounded-[1.5rem] hover:bg-blue-100 transition-all active:scale-95 text-xs sm:text-sm"
+                            >
+                              Limpar Armazenamento
                             </button>
                             <button 
-                              onClick={importData}
-                              className="px-8 py-5 bg-purple-50 text-purple-600 font-black uppercase tracking-widest rounded-[1.5rem] hover:bg-purple-100 transition-all active:scale-95 flex items-center justify-center gap-2"
+                              onClick={() => {
+                                if (confirm('Isso apagará TODAS as suas personalizações e voltará aos dados padrão. Continuar?')) {
+                                  localStorage.clear();
+                                  window.location.reload();
+                                }
+                              }}
+                              className="px-4 sm:px-8 py-3 sm:py-5 bg-red-50 text-red-500 font-black uppercase tracking-widest rounded-xl sm:rounded-[1.5rem] hover:bg-red-100 transition-all active:scale-95 text-xs sm:text-sm"
                             >
-                              <Upload size={16} /> Importar Arquivo
+                              Resetar Tudo
                             </button>
                           </div>
-                          <button 
-                            onClick={importFromPaste}
-                            className="w-full px-8 py-5 bg-blue-50 text-blue-600 font-black uppercase tracking-widest rounded-[1.5rem] hover:bg-blue-100 transition-all active:scale-95 flex items-center justify-center gap-2"
-                          >
-                            <MessageCircle size={16} /> Colar JSON (Sincronizar)
-                          </button>
-                          <p className="text-xs text-stone-400 text-center">
-                            💡 Dica: Exporte no localhost, copie o JSON e cole aqui para sincronizar entre navegadores
-                          </p>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                        <div>
                           <button 
                             onClick={() => {
-                              if (confirm('Isso limpará pedidos antigos e imagens grandes para liberar espaço, mas manterá suas configurações. Continuar?')) {
-                                try {
-                                  // Keep only last 5 orders
-                                  const recentOrders = orders.slice(0, 5);
-                                  localStorage.setItem('minas_v2_orders', JSON.stringify(recentOrders));
-                                  setOrders(recentOrders);
-                                  
-                                  // Remove large images from items
-                                  const cleanedItems = items.map(item => ({
-                                    ...item,
-                                    image: item.image && item.image.length > 500000 ? undefined : item.image
-                                  }));
-                                  localStorage.setItem('minas_v2_items', JSON.stringify(cleanedItems));
-                                  setItems(cleanedItems);
-                                  
-                                  // Remove old localStorage keys
-                                  const oldKeys = ['minas_settings', 'minas_categories', 'minas_items', 'minas_orders'];
-                                  oldKeys.forEach(key => localStorage.removeItem(key));
-                                  
-                                  alert('Armazenamento limpo! Pedidos antigos e imagens grandes foram removidos.');
-                                } catch (error) {
-                                  console.error('Error cleaning storage:', error);
-                                  alert('Erro ao limpar armazenamento. Tente novamente.');
-                                }
-                              }
+                              localStorage.setItem('minas_v2_settings', JSON.stringify(settings));
+                              localStorage.setItem('minas_v2_categories', JSON.stringify(categories));
+                              localStorage.setItem('minas_v2_items', JSON.stringify(items));
+                              alert('Todas as alterações foram salvas com sucesso!');
                             }}
-                            className="px-8 py-5 bg-blue-50 text-blue-600 font-black uppercase tracking-widest rounded-[1.5rem] hover:bg-blue-100 transition-all active:scale-95"
+                            className="w-full px-6 sm:px-12 py-4 sm:py-6 bg-green-600 hover:bg-green-700 text-white font-black uppercase tracking-widest rounded-xl sm:rounded-[1.5rem] shadow-2xl shadow-green-600/30 transition-all active:scale-95 flex items-center justify-center gap-3 sm:gap-4 text-sm sm:text-base"
                           >
-                            Limpar Armazenamento
-                          </button>
-                          <button 
-                            onClick={() => {
-                              if (confirm('Isso apagará TODAS as suas personalizações e voltará aos dados padrão. Continuar?')) {
-                                localStorage.clear();
-                                window.location.reload();
-                              }
-                            }}
-                            className="px-8 py-5 bg-red-50 text-red-500 font-black uppercase tracking-widest rounded-[1.5rem] hover:bg-red-100 transition-all active:scale-95"
-                          >
-                            Resetar Tudo
+                            <Save size={18} className="sm:w-5 sm:h-5" /> Salvar Todas as Alterações
                           </button>
                         </div>
                       </div>
