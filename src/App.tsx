@@ -655,20 +655,58 @@ function App() {
     items?: MenuItem[];
     settings?: RestaurantSettings;
     orders?: Order[];
+    optimized?: boolean;
   }) => {
     if (!importedData.categories || !importedData.items || !importedData.settings) {
       alert('Arquivo inválido. Certifique-se de que é um backup válido do sistema.');
       return false;
     }
     
+    // Check if this is an optimized export (without images)
+    const isOptimized = importedData.optimized === true;
+    
     // Import data
     console.log('Importing categories:', importedData.categories.length);
     console.log('Importing items:', importedData.items.length);
     console.log('Importing settings:', importedData.settings);
+    console.log('Is optimized (no images):', isOptimized);
     
+    // Import categories
     setCategories(importedData.categories);
-    setItems(importedData.items);
-    setSettings(importedData.settings);
+    
+    // Import items - preserve images if optimized
+    if (isOptimized) {
+      // Merge: keep existing images, update other data
+      const mergedItems = importedData.items.map(importedItem => {
+        const existingItem = items.find(item => item.id === importedItem.id);
+        return {
+          ...importedItem,
+          image: existingItem?.image || importedItem.image || '' // Keep existing image if available
+        };
+      });
+      setItems(mergedItems);
+    } else {
+      // Full import - replace everything including images
+      setItems(importedData.items);
+    }
+    
+    // Import settings - preserve images/videos if optimized
+    if (isOptimized) {
+      // Merge: keep existing media, update other settings
+      const mergedSettings: RestaurantSettings = {
+        ...importedData.settings,
+        logo: settings.logo || importedData.settings.logo || '', // Keep existing logo
+        heroVideo: settings.heroVideo || importedData.settings.heroVideo || '', // Keep existing video
+        heroImage: settings.heroImage || importedData.settings.heroImage || '', // Keep existing hero image
+        aboutImage1: settings.aboutImage1 || importedData.settings.aboutImage1 || '', // Keep existing about image 1
+        aboutImage2: settings.aboutImage2 || importedData.settings.aboutImage2 || '' // Keep existing about image 2
+      };
+      setSettings(mergedSettings);
+    } else {
+      // Full import - replace everything including media
+      setSettings(importedData.settings);
+    }
+    
     if (importedData.orders) {
       setOrders(importedData.orders);
     }
@@ -710,10 +748,41 @@ function App() {
       reader.onload = (event) => {
         try {
           const importedData = JSON.parse(event.target?.result as string);
-          processImportedData(importedData);
+          
+          // Validate structure
+          if (!importedData.categories || !Array.isArray(importedData.categories)) {
+            alert('Erro: O arquivo não contém categorias válidas.');
+            return;
+          }
+          if (!importedData.items || !Array.isArray(importedData.items)) {
+            alert('Erro: O arquivo não contém itens válidos.');
+            return;
+          }
+          if (!importedData.settings || typeof importedData.settings !== 'object') {
+            alert('Erro: O arquivo não contém configurações válidas.');
+            return;
+          }
+          
+          // Check if optimized (no images)
+          const isOptimized = importedData.optimized === true;
+          
+          // Show summary before importing
+          const summary = `Dados encontrados:\n\n` +
+            `• ${importedData.categories.length} categoria(s)\n` +
+            `• ${importedData.items.length} item(ns)\n` +
+            `• Configurações: ${importedData.settings.name || 'N/A'}\n` +
+            `${isOptimized ? '\n⚠️ JSON OTIMIZADO: Imagens/vídeos serão preservados (não substituídos).' : '\n📸 Backup completo: Todas as imagens serão substituídas.'}\n\n` +
+            `Continuar com a importação?`;
+          
+          if (confirm(summary)) {
+            processImportedData(importedData);
+          } else {
+            alert('Importação cancelada.');
+          }
         } catch (error) {
           console.error('Error importing data:', error);
-          alert('Erro ao importar dados. Certifique-se de que o arquivo é um JSON válido.');
+          const errorMsg = error instanceof Error ? error.message : String(error);
+          alert(`Erro ao importar dados:\n\n${errorMsg}\n\nCertifique-se de que o arquivo é um JSON válido.`);
         }
       };
       reader.readAsText(file);
@@ -750,16 +819,23 @@ function App() {
         return;
       }
       
+      // Check if optimized (no images)
+      const isOptimized = importedData.optimized === true;
+      
       // Show summary before importing
       const summary = `Dados encontrados:\n\n` +
         `• ${importedData.categories.length} categoria(s)\n` +
         `• ${importedData.items.length} item(ns)\n` +
-        `• Configurações: ${importedData.settings.name || 'N/A'}\n\n` +
-        `Isso substituirá TODOS os dados atuais. Continuar?`;
+        `• Configurações: ${importedData.settings.name || 'N/A'}\n` +
+        `${isOptimized ? '\n⚠️ JSON OTIMIZADO: Imagens/vídeos serão preservados (não substituídos).' : '\n📸 Backup completo: Todas as imagens serão substituídas.'}\n\n` +
+        `Continuar com a importação?`;
       
       if (confirm(summary)) {
         processImportedData(importedData);
-        alert('✅ Dados importados com sucesso!\n\nRecarregue a página para ver as alterações.');
+        const successMsg = isOptimized
+          ? '✅ Dados importados com sucesso!\n\nImagens e vídeos foram preservados.\n\nA página será recarregada em 1 segundo...'
+          : '✅ Dados importados com sucesso!\n\nA página será recarregada em 1 segundo...';
+        alert(successMsg);
       } else {
         alert('Importação cancelada.');
       }
