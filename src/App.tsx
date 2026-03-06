@@ -395,7 +395,7 @@ function App() {
     ? items 
     : items.filter(i => i.category === activeCategory);
 
-  // Export all data to JSON file
+  // Export all data to JSON file (full backup)
   const exportData = () => {
     try {
       const exportData = {
@@ -422,6 +422,67 @@ function App() {
     } catch (error) {
       console.error('Error exporting data:', error);
       alert('Erro ao exportar dados. Tente novamente.');
+    }
+  };
+
+  // Export optimized data for sync (removes large images to reduce size)
+  const exportDataForSync = () => {
+    try {
+      // Remove large images from items (keep only small thumbnails)
+      const optimizedItems = items.map(item => ({
+        ...item,
+        image: item.image && item.image.length > 100000 ? undefined : item.image // Remove images > 100KB
+      }));
+
+      // Remove large media from settings
+      const optimizedSettings = {
+        ...settings,
+        logo: settings.logo && settings.logo.length > 100000 ? undefined : settings.logo,
+        heroImage: settings.heroImage && settings.heroImage.length > 100000 ? undefined : settings.heroImage,
+        heroVideo: settings.heroVideo && settings.heroVideo.length > 500000 ? undefined : settings.heroVideo, // Remove videos > 500KB
+        aboutImage1: settings.aboutImage1 && settings.aboutImage1.length > 100000 ? undefined : settings.aboutImage1,
+        aboutImage2: settings.aboutImage2 && settings.aboutImage2.length > 100000 ? undefined : settings.aboutImage2,
+      };
+
+      const exportData = {
+        categories: categories,
+        items: optimizedItems,
+        settings: optimizedSettings,
+        orders: [], // Don't export orders for sync
+        exportDate: new Date().toISOString(),
+        version: '2.0',
+        optimized: true
+      };
+      
+      // Compress JSON (no formatting, single line)
+      const dataStr = JSON.stringify(exportData);
+      const sizeInKB = new Blob([dataStr]).size / 1024;
+      
+      // Copy to clipboard
+      navigator.clipboard.writeText(dataStr).then(() => {
+        alert(`Dados otimizados copiados para área de transferência!\n\nTamanho: ${sizeInKB.toFixed(2)} KB\n\nAgora você pode colar no celular usando o botão "Colar JSON".\n\nNota: Imagens grandes foram removidas para reduzir o tamanho.`);
+      }).catch(() => {
+        // Fallback: show in prompt
+        const shouldCopy = confirm(`Dados otimizados prontos!\n\nTamanho: ${sizeInKB.toFixed(2)} KB\n\nClique OK para ver o texto e copiar manualmente.`);
+        if (shouldCopy) {
+          const textarea = document.createElement('textarea');
+          textarea.value = dataStr;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.select();
+          try {
+            document.execCommand('copy');
+            alert('Dados copiados! Agora cole no celular usando o botão "Colar JSON".');
+          } catch (e) {
+            prompt('Copie este texto:', dataStr);
+          }
+          document.body.removeChild(textarea);
+        }
+      });
+    } catch (error) {
+      console.error('Error exporting optimized data:', error);
+      alert('Erro ao exportar dados otimizados. Tente novamente.');
     }
   };
 
@@ -1615,8 +1676,9 @@ function App() {
                               <button 
                                 onClick={exportData}
                                 className="px-4 sm:px-8 py-3 sm:py-5 bg-green-50 text-green-600 font-black uppercase tracking-widest rounded-xl sm:rounded-[1.5rem] hover:bg-green-100 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs sm:text-sm"
+                                title="Exporta todos os dados completos (arquivo grande)"
                               >
-                                <Save size={14} className="sm:w-4 sm:h-4" /> Exportar Dados
+                                <Save size={14} className="sm:w-4 sm:h-4" /> Backup Completo
                               </button>
                               <button 
                                 onClick={importData}
@@ -1626,13 +1688,19 @@ function App() {
                               </button>
                             </div>
                             <button 
+                              onClick={exportDataForSync}
+                              className="w-full px-4 sm:px-8 py-3 sm:py-5 bg-orange-50 text-orange-600 font-black uppercase tracking-widest rounded-xl sm:rounded-[1.5rem] hover:bg-orange-100 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs sm:text-sm border-2 border-orange-200"
+                            >
+                              <MessageCircle size={14} className="sm:w-4 sm:h-4" /> 📱 Copiar para Celular (Otimizado)
+                            </button>
+                            <button 
                               onClick={importFromPaste}
                               className="w-full px-4 sm:px-8 py-3 sm:py-5 bg-blue-50 text-blue-600 font-black uppercase tracking-widest rounded-xl sm:rounded-[1.5rem] hover:bg-blue-100 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs sm:text-sm"
                             >
                               <MessageCircle size={14} className="sm:w-4 sm:h-4" /> Colar JSON (Sincronizar)
                             </button>
                             <p className="text-[10px] sm:text-xs text-stone-400 text-center px-2">
-                              💡 Dica: Exporte no localhost, copie o JSON e cole aqui para sincronizar entre navegadores
+                              💡 <strong>Para celular:</strong> Use "Copiar para Celular" no PC, depois "Colar JSON" no celular. Imagens grandes são removidas automaticamente para reduzir o tamanho.
                             </p>
                           </div>
                         </div>
