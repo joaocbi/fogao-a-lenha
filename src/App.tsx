@@ -425,6 +425,47 @@ function App() {
     }
   };
 
+  // Helper function to process imported data
+  const processImportedData = (importedData: any) => {
+    if (!importedData.categories || !importedData.items || !importedData.settings) {
+      alert('Arquivo inválido. Certifique-se de que é um backup válido do sistema.');
+      return false;
+    }
+    
+    if (confirm('Isso substituirá TODOS os dados atuais pelos dados do arquivo. Continuar?')) {
+      // Import data
+      setCategories(importedData.categories || categories);
+      setItems(importedData.items || items);
+      setSettings(importedData.settings || settings);
+      if (importedData.orders) {
+        setOrders(importedData.orders || orders);
+      }
+      
+      // Save to localStorage immediately
+      try {
+        localStorage.setItem('minas_v2_categories', JSON.stringify(importedData.categories || categories));
+        localStorage.setItem('minas_v2_items', JSON.stringify(importedData.items || items));
+        localStorage.setItem('minas_v2_settings', JSON.stringify(importedData.settings || settings));
+        if (importedData.orders) {
+          localStorage.setItem('minas_v2_orders', JSON.stringify(importedData.orders || orders));
+        }
+        
+        alert('Dados importados com sucesso! A página será recarregada.');
+        setTimeout(() => window.location.reload(), 1000);
+        return true;
+      } catch (error) {
+        console.error('Error saving imported data:', error);
+        if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+          alert('Armazenamento cheio! Alguns dados podem não ter sido salvos. Tente limpar o armazenamento primeiro.');
+        } else {
+          alert('Erro ao salvar dados importados. Tente novamente.');
+        }
+        return false;
+      }
+    }
+    return false;
+  };
+
   // Import data from JSON file
   const importData = () => {
     const input = document.createElement('input');
@@ -438,41 +479,7 @@ function App() {
       reader.onload = (event) => {
         try {
           const importedData = JSON.parse(event.target?.result as string);
-          
-          if (!importedData.categories || !importedData.items || !importedData.settings) {
-            alert('Arquivo inválido. Certifique-se de que é um backup válido do sistema.');
-            return;
-          }
-          
-          if (confirm('Isso substituirá TODOS os dados atuais pelos dados do arquivo. Continuar?')) {
-            // Import data
-            setCategories(importedData.categories || categories);
-            setItems(importedData.items || items);
-            setSettings(importedData.settings || settings);
-            if (importedData.orders) {
-              setOrders(importedData.orders || orders);
-            }
-            
-            // Save to localStorage immediately
-            try {
-              localStorage.setItem('minas_v2_categories', JSON.stringify(importedData.categories || categories));
-              localStorage.setItem('minas_v2_items', JSON.stringify(importedData.items || items));
-              localStorage.setItem('minas_v2_settings', JSON.stringify(importedData.settings || settings));
-              if (importedData.orders) {
-                localStorage.setItem('minas_v2_orders', JSON.stringify(importedData.orders || orders));
-              }
-              
-              alert('Dados importados com sucesso! A página será recarregada.');
-              setTimeout(() => window.location.reload(), 1000);
-            } catch (error) {
-              console.error('Error saving imported data:', error);
-              if (error instanceof DOMException && error.name === 'QuotaExceededError') {
-                alert('Armazenamento cheio! Alguns dados podem não ter sido salvos. Tente limpar o armazenamento primeiro.');
-              } else {
-                alert('Erro ao salvar dados importados. Tente novamente.');
-              }
-            }
-          }
+          processImportedData(importedData);
         } catch (error) {
           console.error('Error importing data:', error);
           alert('Erro ao importar dados. Certifique-se de que o arquivo é um JSON válido.');
@@ -481,6 +488,20 @@ function App() {
       reader.readAsText(file);
     };
     input.click();
+  };
+
+  // Import data from pasted JSON
+  const importFromPaste = () => {
+    const jsonText = prompt('Cole o JSON exportado aqui:');
+    if (!jsonText) return;
+    
+    try {
+      const importedData = JSON.parse(jsonText);
+      processImportedData(importedData);
+    } catch (error) {
+      console.error('Error parsing pasted JSON:', error);
+      alert('Erro ao processar JSON. Certifique-se de que o texto está completo e válido.');
+    }
   };
 
   return (
@@ -1514,19 +1535,30 @@ function App() {
                         >
                           <Save size={20} /> Salvar Alterações
                         </button>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <button 
+                              onClick={exportData}
+                              className="px-8 py-5 bg-green-50 text-green-600 font-black uppercase tracking-widest rounded-[1.5rem] hover:bg-green-100 transition-all active:scale-95 flex items-center justify-center gap-2"
+                            >
+                              <Save size={16} /> Exportar Dados
+                            </button>
+                            <button 
+                              onClick={importData}
+                              className="px-8 py-5 bg-purple-50 text-purple-600 font-black uppercase tracking-widest rounded-[1.5rem] hover:bg-purple-100 transition-all active:scale-95 flex items-center justify-center gap-2"
+                            >
+                              <Upload size={16} /> Importar Arquivo
+                            </button>
+                          </div>
                           <button 
-                            onClick={exportData}
-                            className="px-8 py-5 bg-green-50 text-green-600 font-black uppercase tracking-widest rounded-[1.5rem] hover:bg-green-100 transition-all active:scale-95 flex items-center justify-center gap-2"
+                            onClick={importFromPaste}
+                            className="w-full px-8 py-5 bg-blue-50 text-blue-600 font-black uppercase tracking-widest rounded-[1.5rem] hover:bg-blue-100 transition-all active:scale-95 flex items-center justify-center gap-2"
                           >
-                            <Save size={16} /> Exportar Dados
+                            <MessageCircle size={16} /> Colar JSON (Sincronizar)
                           </button>
-                          <button 
-                            onClick={importData}
-                            className="px-8 py-5 bg-purple-50 text-purple-600 font-black uppercase tracking-widest rounded-[1.5rem] hover:bg-purple-100 transition-all active:scale-95 flex items-center justify-center gap-2"
-                          >
-                            <Upload size={16} /> Importar Dados
-                          </button>
+                          <p className="text-xs text-stone-400 text-center">
+                            💡 Dica: Exporte no localhost, copie o JSON e cole aqui para sincronizar entre navegadores
+                          </p>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <button 
