@@ -850,18 +850,18 @@ function App() {
     <div className="min-h-screen font-sans bg-orange-50 text-stone-900 selection:bg-orange-200 selection:text-orange-900">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md shadow-sm border-b border-orange-100">
-        <div className="container mx-auto px-3 sm:px-4 h-16 sm:h-20 flex items-center justify-between">
-          <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+        <div className="container mx-auto px-2 sm:px-4 h-14 sm:h-20 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-4 min-w-0 flex-1 overflow-hidden">
             {settings.logo ? (
-              <img src={settings.logo} alt={settings.name || 'Logo'} className="w-12 h-12 sm:w-16 sm:h-16 object-contain rounded-xl flex-shrink-0" />
+              <img src={settings.logo} alt={settings.name || 'Logo'} className="w-10 h-10 sm:w-16 sm:h-16 object-contain rounded-lg sm:rounded-xl flex-shrink-0" />
             ) : (
-              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-orange-700 rounded-2xl flex items-center justify-center text-white font-black text-lg sm:text-2xl shadow-lg shadow-orange-700/20 rotate-3 flex-shrink-0">
+              <div className="w-10 h-10 sm:w-16 sm:h-16 bg-orange-700 rounded-xl sm:rounded-2xl flex items-center justify-center text-white font-black text-sm sm:text-2xl shadow-lg shadow-orange-700/20 rotate-3 flex-shrink-0">
                 {(settings.name || 'Sabor Fogão a Lenha').split(' ').filter(Boolean).map(n => n[0] || '').join('').slice(0, 2).toUpperCase()}
               </div>
             )}
-            <div className="flex flex-col justify-center min-w-0">
-              <h1 className="text-sm sm:text-lg md:text-2xl font-black text-orange-900 leading-none tracking-tight mb-0.5 sm:mb-1 truncate">{settings.name || 'Sabor Fogão a Lenha'}</h1>
-              <p className="text-[9px] sm:text-[11px] text-green-700 font-bold tracking-[0.2em] uppercase">Comida Caseira</p>
+            <div className="flex flex-col justify-center min-w-0 flex-1 overflow-hidden">
+              <h1 className="text-[10px] sm:text-lg md:text-2xl font-black text-orange-900 leading-tight sm:leading-none tracking-tight mb-0 truncate">{settings.name || 'Sabor Fogão a Lenha'}</h1>
+              <p className="text-[7px] sm:text-[11px] text-green-700 font-bold tracking-[0.1em] sm:tracking-[0.2em] uppercase truncate">Comida Caseira</p>
             </div>
           </div>
 
@@ -983,7 +983,7 @@ function App() {
       </section>
 
       {/* Categories Bar */}
-      <div className="sticky top-16 sm:top-20 z-40 bg-orange-50/90 backdrop-blur-xl border-b border-orange-100 py-4 sm:py-6">
+      <div className="sticky top-14 sm:top-20 z-40 bg-orange-50/90 backdrop-blur-xl border-b border-orange-100 py-3 sm:py-6">
         <div className="container mx-auto px-3 sm:px-4 flex items-center gap-2 sm:gap-4 overflow-x-auto no-scrollbar">
           <button 
             onClick={() => setActiveCategory('all')} 
