@@ -525,83 +525,118 @@ function App() {
     }
   };
 
-  // Import data from multiple chunks (one at a time)
+  // Import data from multiple chunks (flexible - can paste multiple parts at once)
   const importFromChunks = () => {
-    const chunks: string[] = [];
+    const collectedChunks: Map<number, string> = new Map();
     let totalChunks = 0;
     
-    // First, get the header to know total parts
-    const headerInput = prompt('Cole apenas o CABEÇALHO da mensagem (a parte que diz "Total: X parte(s)"):');
-    if (!headerInput) return;
-    
-    // Extract total chunks from header
-    const totalMatch = headerInput.match(/Total:\s*(\d+)/i);
-    if (totalMatch) {
-      totalChunks = parseInt(totalMatch[1]);
-    } else {
-      // Try to find in PARTE format
-      const parteMatch = headerInput.match(/PARTE\s*\d+\/(\d+)/i);
-      if (parteMatch) {
-        totalChunks = parseInt(parteMatch[1]);
-      } else {
-        const userInput = prompt('Quantas partes no total? (veja no início da mensagem do WhatsApp)');
-        if (!userInput) return;
-        totalChunks = parseInt(userInput) || 1;
-      }
-    }
-    
-    if (totalChunks === 0) {
-      alert('Não foi possível detectar o número de partes. Tente novamente.');
-      return;
-    }
-    
-    // Now collect each part one by one
-    for (let i = 1; i <= totalChunks; i++) {
-      const partInput = prompt(`Cole a PARTE ${i}/${totalChunks}:\n\n(Selecione e copie apenas a parte que diz "PARTE ${i}/${totalChunks}:" e o JSON abaixo dela)`);
+    // Helper function to extract chunks from text
+    const extractChunksFromText = (text: string): Map<number, string> => {
+      const foundChunks: Map<number, string> = new Map();
       
-      if (!partInput) {
-        const cancel = confirm(`Você cancelou. Deseja continuar com as ${chunks.length} parte(s) já coletadas?`);
+      // Extract total chunks from header
+      const totalMatch = text.match(/Total:\s*(\d+)/i);
+      if (totalMatch && !totalChunks) {
+        totalChunks = parseInt(totalMatch[1]);
+      }
+      
+      // Extract each PARTE X/Y: chunk
+      const parteRegex = /PARTE\s*(\d+)\/(\d+):\s*([\s\S]*?)(?=\n\n━━|PARTE\s*\d+\/|$)/gi;
+      let match;
+      
+      while ((match = parteRegex.exec(text)) !== null) {
+        const partNum = parseInt(match[1]);
+        const totalParts = parseInt(match[2]);
+        const chunkData = match[3].trim();
+        
+        if (!totalChunks) {
+          totalChunks = totalParts;
+        }
+        
+        if (chunkData && chunkData.length > 10) {
+          foundChunks.set(partNum, chunkData);
+        }
+      }
+      
+      return foundChunks;
+    };
+    
+    // First attempt: try to get everything at once
+    let firstInput = prompt('Cole o máximo que conseguir do WhatsApp:\n\n(Pode ser o cabeçalho, uma parte, ou várias partes juntas)\n\nSe não conseguir copiar tudo, cole o que conseguir e depois continuaremos.');
+    
+    if (!firstInput) return;
+    
+    // Extract chunks from first input
+    const firstChunks = extractChunksFromText(firstInput);
+    firstChunks.forEach((chunk, partNum) => {
+      collectedChunks.set(partNum, chunk);
+    });
+    
+    // If we still don't know total, ask user
+    if (!totalChunks) {
+      const userInput = prompt(`Quantas partes no total? (veja no início da mensagem do WhatsApp)\n\nJá coletadas: ${collectedChunks.size}`);
+      if (!userInput) return;
+      totalChunks = parseInt(userInput) || collectedChunks.size;
+    }
+    
+    // Continue collecting missing parts
+    while (collectedChunks.size < totalChunks) {
+      const missingParts: number[] = [];
+      for (let i = 1; i <= totalChunks; i++) {
+        if (!collectedChunks.has(i)) {
+          missingParts.push(i);
+        }
+      }
+      
+      if (missingParts.length === 0) break;
+      
+      const missingList = missingParts.length <= 5 
+        ? missingParts.join(', ')
+        : `${missingParts.slice(0, 5).join(', ')}... (e mais ${missingParts.length - 5})`;
+      
+      const nextInput = prompt(`Faltam ${missingParts.length} parte(s): ${missingList}\n\nCole a(s) parte(s) que faltam:\n\n(Pode colar uma ou várias partes de uma vez)`);
+      
+      if (!nextInput) {
+        const cancel = confirm(`Você cancelou. Deseja continuar com as ${collectedChunks.size} parte(s) já coletadas de ${totalChunks}?`);
         if (!cancel) return;
         break;
       }
       
-      // Extract JSON from this part
-      let chunkData = '';
+      // Extract chunks from this input
+      const newChunks = extractChunksFromText(nextInput);
+      newChunks.forEach((chunk, partNum) => {
+        collectedChunks.set(partNum, chunk);
+      });
       
-      // Try to extract from "PARTE X/Y:" format
-      const parteMatch = partInput.match(/PARTE\s*\d+\/\d+:\s*([\s\S]*?)(?=\n\n━━|PARTE\s*\d+\/|$)/i);
-      if (parteMatch) {
-        chunkData = parteMatch[1].trim();
-      } else {
-        // Try to extract JSON directly
-        const jsonMatch = partInput.match(/\{[\s\S]*\}/);
+      // If no new chunks found, try to extract JSON directly
+      if (newChunks.size === 0) {
+        const jsonMatch = nextInput.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
-          chunkData = jsonMatch[0];
-        } else {
-          // Use the whole input as chunk
-          chunkData = partInput.trim();
+          // Try to guess which part this is based on missing parts
+          const guessPart = missingParts[0];
+          collectedChunks.set(guessPart, jsonMatch[0]);
         }
-      }
-      
-      if (chunkData) {
-        chunks.push(chunkData);
-      } else {
-        alert(`Não foi possível extrair o JSON da parte ${i}. Tente novamente.`);
-        i--; // Retry this part
-        continue;
       }
     }
     
-    if (chunks.length === 0) {
+    if (collectedChunks.size === 0) {
       alert('Nenhuma parte foi coletada. Importação cancelada.');
       return;
     }
     
+    // Reconstruct JSON in order
+    const orderedChunks: string[] = [];
+    for (let i = 1; i <= totalChunks; i++) {
+      if (collectedChunks.has(i)) {
+        orderedChunks.push(collectedChunks.get(i)!);
+      }
+    }
+    
     // Combine all chunks
-    const combinedData = chunks.join('');
+    const combinedData = orderedChunks.join('');
     
     // Show info before importing
-    const info = `Coletadas ${chunks.length} parte(s) de ${totalChunks} total.\n\nTamanho: ${(combinedData.length / 1024).toFixed(2)} KB\n\nContinuar com a importação?`;
+    const info = `Coletadas ${collectedChunks.size} parte(s) de ${totalChunks} total.\n\nTamanho: ${(combinedData.length / 1024).toFixed(2)} KB\n\nContinuar com a importação?`;
     if (!confirm(info)) return;
     
     try {
@@ -609,7 +644,8 @@ function App() {
       processImportedData(importedData);
     } catch (error) {
       console.error('Error parsing combined chunks:', error);
-      alert(`Erro ao processar as partes.\n\nPartes coletadas: ${chunks.length}/${totalChunks}\nTamanho: ${(combinedData.length / 1024).toFixed(2)} KB\n\nCertifique-se de que copiou cada parte corretamente do WhatsApp.`);
+      const missing = totalChunks - collectedChunks.size;
+      alert(`Erro ao processar as partes.\n\nPartes coletadas: ${collectedChunks.size}/${totalChunks}${missing > 0 ? `\nFaltam: ${missing} parte(s)` : ''}\nTamanho: ${(combinedData.length / 1024).toFixed(2)} KB\n\nCertifique-se de que copiou todas as partes corretamente do WhatsApp.`);
     }
   };
 
