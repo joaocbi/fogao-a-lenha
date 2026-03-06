@@ -525,74 +525,83 @@ function App() {
     }
   };
 
-  // Import data from multiple chunks
+  // Import data from multiple chunks (one at a time)
   const importFromChunks = () => {
-    // Ask for the complete message with all parts
-    const fullMessage = prompt('Cole TODA a mensagem do WhatsApp (com todas as partes):');
-    if (!fullMessage) return;
-    
-    // Extract total chunks from message
+    const chunks: string[] = [];
     let totalChunks = 0;
-    const totalMatch = fullMessage.match(/Total:\s*(\d+)/i);
+    
+    // First, get the header to know total parts
+    const headerInput = prompt('Cole apenas o CABEÇALHO da mensagem (a parte que diz "Total: X parte(s)"):');
+    if (!headerInput) return;
+    
+    // Extract total chunks from header
+    const totalMatch = headerInput.match(/Total:\s*(\d+)/i);
     if (totalMatch) {
       totalChunks = parseInt(totalMatch[1]);
-    }
-    
-    // Extract all chunks from the message
-    const chunks: string[] = [];
-    const chunkRegex = /PARTE\s*(\d+)\/(\d+):\s*([\s\S]*?)(?=\n\n━━|PARTE\s*\d+\/|$)/gi;
-    let match;
-    
-    while ((match = chunkRegex.exec(fullMessage)) !== null) {
-      const partNumber = parseInt(match[1]);
-      const totalParts = parseInt(match[2]);
-      const chunkData = match[3].trim();
-      
-      if (!totalChunks) {
-        totalChunks = totalParts;
-      }
-      
-      chunks[partNumber - 1] = chunkData; // Store in array index (0-based)
-    }
-    
-    // If regex didn't work, try alternative method
-    if (chunks.length === 0) {
-      // Try to find JSON parts directly
-      const jsonParts = fullMessage.match(/\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g);
-      if (jsonParts) {
-        jsonParts.forEach(part => chunks.push(part));
+    } else {
+      // Try to find in PARTE format
+      const parteMatch = headerInput.match(/PARTE\s*\d+\/(\d+)/i);
+      if (parteMatch) {
+        totalChunks = parseInt(parteMatch[1]);
       } else {
-        // Last resort: ask user
-        if (!totalChunks) {
-          const userInput = prompt('Não foi possível detectar automaticamente. Quantas partes no total?');
-          if (!userInput) return;
-          totalChunks = parseInt(userInput) || 1;
-        }
-        
-        // Try to split by separator lines
-        const parts = fullMessage.split(/━━+/);
-        parts.forEach((part) => {
-          const jsonMatch = part.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            chunks.push(jsonMatch[0]);
-          }
-        });
+        const userInput = prompt('Quantas partes no total? (veja no início da mensagem do WhatsApp)');
+        if (!userInput) return;
+        totalChunks = parseInt(userInput) || 1;
       }
     }
     
-    // Filter out empty chunks
-    const validChunks = chunks.filter(chunk => chunk && chunk.trim().length > 0);
+    if (totalChunks === 0) {
+      alert('Não foi possível detectar o número de partes. Tente novamente.');
+      return;
+    }
     
-    if (validChunks.length === 0) {
-      alert('Não foi possível extrair as partes do JSON. Certifique-se de que copiou a mensagem completa do WhatsApp.');
+    // Now collect each part one by one
+    for (let i = 1; i <= totalChunks; i++) {
+      const partInput = prompt(`Cole a PARTE ${i}/${totalChunks}:\n\n(Selecione e copie apenas a parte que diz "PARTE ${i}/${totalChunks}:" e o JSON abaixo dela)`);
+      
+      if (!partInput) {
+        const cancel = confirm(`Você cancelou. Deseja continuar com as ${chunks.length} parte(s) já coletadas?`);
+        if (!cancel) return;
+        break;
+      }
+      
+      // Extract JSON from this part
+      let chunkData = '';
+      
+      // Try to extract from "PARTE X/Y:" format
+      const parteMatch = partInput.match(/PARTE\s*\d+\/\d+:\s*([\s\S]*?)(?=\n\n━━|PARTE\s*\d+\/|$)/i);
+      if (parteMatch) {
+        chunkData = parteMatch[1].trim();
+      } else {
+        // Try to extract JSON directly
+        const jsonMatch = partInput.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          chunkData = jsonMatch[0];
+        } else {
+          // Use the whole input as chunk
+          chunkData = partInput.trim();
+        }
+      }
+      
+      if (chunkData) {
+        chunks.push(chunkData);
+      } else {
+        alert(`Não foi possível extrair o JSON da parte ${i}. Tente novamente.`);
+        i--; // Retry this part
+        continue;
+      }
+    }
+    
+    if (chunks.length === 0) {
+      alert('Nenhuma parte foi coletada. Importação cancelada.');
       return;
     }
     
     // Combine all chunks
-    const combinedData = validChunks.join('');
+    const combinedData = chunks.join('');
     
-    // Show info
-    const info = `Encontradas ${validChunks.length} parte(s) de ${totalChunks || '?'} total.\n\nContinuar com a importação?`;
+    // Show info before importing
+    const info = `Coletadas ${chunks.length} parte(s) de ${totalChunks} total.\n\nTamanho: ${(combinedData.length / 1024).toFixed(2)} KB\n\nContinuar com a importação?`;
     if (!confirm(info)) return;
     
     try {
@@ -600,7 +609,7 @@ function App() {
       processImportedData(importedData);
     } catch (error) {
       console.error('Error parsing combined chunks:', error);
-      alert(`Erro ao processar as partes.\n\nPartes encontradas: ${validChunks.length}\nTamanho total: ${(combinedData.length / 1024).toFixed(2)} KB\n\nCertifique-se de que copiou TODA a mensagem do WhatsApp corretamente.`);
+      alert(`Erro ao processar as partes.\n\nPartes coletadas: ${chunks.length}/${totalChunks}\nTamanho: ${(combinedData.length / 1024).toFixed(2)} KB\n\nCertifique-se de que copiou cada parte corretamente do WhatsApp.`);
     }
   };
 
