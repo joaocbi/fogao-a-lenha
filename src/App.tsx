@@ -76,24 +76,7 @@ function App() {
     const stored = localStorage.getItem(key);
     if (!stored) return initial;
       const parsed = JSON.parse(stored);
-      // Migration: Fix old wrong names
-      if ((key === 'minas_settings' || key === 'minas_v2_settings') && parsed.name) {
-        const oldNames = ['FOGÃO E SABÃO', 'FOGÃO ESABOR', 'Panela de Minas', 'Meu Restaurante', 'FOGÃO & SABOR', 'Fogão & Sabor', 'Fogão &amp; Sabor'];
-        const nameUpper = parsed.name.toUpperCase().trim();
-        // Check if name contains old variations
-        if (oldNames.includes(parsed.name) || 
-            nameUpper.includes('FOGÃO') && nameUpper.includes('SABOR') ||
-            nameUpper === 'FOGÃO & SABOR' ||
-            parsed.name.includes('Fogão') && parsed.name.includes('Sabor')) {
-          parsed.name = 'Sabor Fogão a Lenha';
-          // Save updated name immediately
-          try {
-            localStorage.setItem(key, JSON.stringify(parsed));
-          } catch (e) {
-            console.error('Error saving migrated name:', e);
-          }
-        }
-      }
+      // No migration - allow any name
       return parsed;
     } catch (error) {
       console.error(`Error loading ${key} from localStorage:`, error);
@@ -176,7 +159,7 @@ function App() {
 
   // Persistence effects
   useEffect(() => {
-    document.title = settings.name || 'Sabor Fogão a Lenha';
+    document.title = settings.name || 'Fogão & Sabor';
   }, [settings.name]);
 
   // Sync functions
@@ -280,18 +263,7 @@ function App() {
     return () => clearTimeout(syncTimeout);
   }, [categories, items, settings, isInitialized]);
 
-  // Force migration on mount if name is still old
-  useEffect(() => {
-    if (settings.name && (
-      settings.name.includes('Fogão & Sabor') || 
-      settings.name.includes('FOGÃO & SABOR') ||
-      settings.name === 'Fogão & Sabor' ||
-      (settings.name.toUpperCase().includes('FOGÃO') && settings.name.toUpperCase().includes('SABOR') && !settings.name.includes('Lenha'))
-    )) {
-      setSettings(prev => ({...prev, name: 'Sabor Fogão a Lenha'}));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Run only once on mount
+  // No forced migration - allow any name
 
   // Auto-save to localStorage (only after initialization to avoid overwriting loaded data)
   useEffect(() => {
@@ -952,11 +924,11 @@ function App() {
               <img src={settings.logo} alt={settings.name || 'Logo'} className="w-10 h-10 sm:w-16 sm:h-16 object-contain rounded-lg sm:rounded-xl flex-shrink-0" />
             ) : (
               <div className="w-10 h-10 sm:w-16 sm:h-16 bg-orange-700 rounded-xl sm:rounded-2xl flex items-center justify-center text-white font-black text-sm sm:text-2xl shadow-lg shadow-orange-700/20 rotate-3 flex-shrink-0">
-                {(settings.name || 'Sabor Fogão a Lenha').split(' ').filter(Boolean).map(n => n[0] || '').join('').slice(0, 2).toUpperCase()}
+                {(settings.name || 'Fogão & Sabor').split(' ').filter(Boolean).map(n => n[0] || '').join('').slice(0, 2).toUpperCase()}
               </div>
             )}
             <div className="flex flex-col justify-center min-w-0 flex-1 overflow-hidden">
-              <h1 className="text-[10px] sm:text-lg md:text-2xl font-black text-orange-900 leading-tight sm:leading-none tracking-tight mb-0 truncate">{settings.name || 'Sabor Fogão a Lenha'}</h1>
+              <h1 className="text-[10px] sm:text-lg md:text-2xl font-black text-orange-900 leading-tight sm:leading-none tracking-tight mb-0 truncate">{settings.name || 'Fogão & Sabor'}</h1>
               <p className="text-[7px] sm:text-[11px] text-green-700 font-bold tracking-[0.1em] sm:tracking-[0.2em] uppercase truncate">Comida Caseira</p>
             </div>
           </div>
@@ -1177,7 +1149,7 @@ function App() {
             <span className="text-orange-400 font-black tracking-[0.3em] uppercase text-[10px] sm:text-xs mb-4 sm:mb-6 block">Tradição & Família</span>
             <h3 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-black text-white mb-6 sm:mb-8 tracking-tighter leading-[0.9]">Sabor e dedicação em cada detalhe</h3>
             <p className="text-stone-400 text-base sm:text-lg md:text-xl leading-relaxed mb-8 sm:mb-10 md:mb-12 font-medium">
-              O restaurante Sabor Fogão a Lenha nasceu do desejo de trazer os sabores autêntico da comida caseira.
+              O restaurante Fogão & Sabor nasceu do desejo de trazer os sabores autênticos da comida caseira.
             </p>
             <div className="grid grid-cols-2 gap-4 sm:gap-6 md:gap-10">
               <div className="p-4 sm:p-6 md:p-8 bg-white/5 rounded-xl sm:rounded-2xl border border-white/10">
@@ -1260,7 +1232,7 @@ function App() {
       {/* Footer */}
       <footer className="bg-orange-50 py-12 sm:py-16 md:py-24 border-t border-orange-100">
         <div className="container mx-auto px-3 sm:px-4 text-center">
-          <h2 className="text-2xl sm:text-3xl font-black text-stone-900 mb-3 sm:mb-4 tracking-tighter">{settings.name || 'Sabor Fogão a Lenha'}</h2>
+          <h2 className="text-2xl sm:text-3xl font-black text-stone-900 mb-3 sm:mb-4 tracking-tighter">{settings.name || 'Fogão & Sabor'}</h2>
           <p className="text-stone-500 font-medium max-w-lg mx-auto mb-8 sm:mb-12 leading-relaxed text-sm sm:text-base">O melhor da culinária mineira direto para sua mesa, com o tempero que você só encontra no interior.</p>
           <div className="flex justify-center gap-6 sm:gap-8 md:gap-10 mb-12 sm:mb-16 flex-wrap">
             <a href="#" className="text-stone-400 hover:text-orange-700 font-black uppercase text-xs tracking-[0.2em] transition-colors">Instagram</a>
@@ -1268,7 +1240,7 @@ function App() {
             <a href="#" className="text-stone-400 hover:text-orange-700 font-black uppercase text-xs tracking-[0.2em] transition-colors">Twitter</a>
           </div>
           <div className="pt-12 border-t border-orange-200/50">
-            <p className="text-stone-400 text-xs font-bold uppercase tracking-widest">© 2026 {settings.name || 'Sabor Fogão a Lenha'}. Feito com paixão mineira.</p>
+            <p className="text-stone-400 text-xs font-bold uppercase tracking-widest">© 2026 {settings.name || 'Fogão & Sabor'}. Feito com paixão mineira.</p>
           </div>
         </div>
       </footer>

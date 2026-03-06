@@ -43,7 +43,7 @@ export const initialMenuItems: MenuItem[] = [
 ];
 
 export const initialSettings: RestaurantSettings = {
-  name: 'Sabor Fogão a Lenha',
+  name: 'Fogão & Sabor',
   logo: '',
   heroVideo: '',
   phone: '(42) 99141-7956',
