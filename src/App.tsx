@@ -1195,7 +1195,7 @@ function App() {
           >
             Todos
           </button>
-          {categories.map(cat => (
+          {[...categories].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')).map(cat => (
             <button 
               key={cat.id} 
               onClick={() => setActiveCategory(cat.id)} 
