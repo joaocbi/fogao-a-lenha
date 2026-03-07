@@ -1229,6 +1229,13 @@ function App() {
                 exit={{ opacity: 0, scale: 0.95 }}
                 key={item.id} 
                 className="bg-white rounded-2xl sm:rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.04)] hover:shadow-[0_40px_80px_rgba(0,0,0,0.08)] transition-all overflow-hidden border border-orange-100 group flex flex-col h-full"
+                style={{ pointerEvents: 'auto' }}
+                onClick={(e) => {
+                  // Prevent card click from interfering with button clicks
+                  if ((e.target as HTMLElement).closest('button')) {
+                    return;
+                  }
+                }}
               >
                 <div className="h-48 sm:h-64 md:h-72 relative overflow-hidden shrink-0">
                   <img 
@@ -1263,12 +1270,24 @@ function App() {
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      console.log('🔘 Add button clicked for:', item.name);
+                      console.log('🔘 Add button clicked for:', item.name, 'Available:', item.available);
+                      if (!item.available) {
+                        console.warn('⚠️ Cannot add unavailable item:', item.name);
+                        alert('Este item não está disponível no momento.');
+                        return;
+                      }
                       addToCart(item);
                     }}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                    }}
                     disabled={!item.available} 
-                    className="mt-auto w-full bg-stone-50 hover:bg-orange-700 text-stone-800 hover:text-white font-black py-3 sm:py-4 md:py-5 rounded-xl sm:rounded-[1.5rem] transition-all flex items-center justify-center gap-2 sm:gap-3 disabled:opacity-30 disabled:cursor-not-allowed group/btn text-xs sm:text-sm active:scale-95"
-                    style={{ pointerEvents: 'auto', zIndex: 10 }}
+                    className="mt-auto w-full bg-stone-50 hover:bg-orange-700 text-stone-800 hover:text-white font-black py-3 sm:py-4 md:py-5 rounded-xl sm:rounded-[1.5rem] transition-all flex items-center justify-center gap-2 sm:gap-3 disabled:opacity-30 disabled:cursor-not-allowed group/btn text-xs sm:text-sm active:scale-95 relative z-20"
+                    style={{ 
+                      pointerEvents: 'auto', 
+                      zIndex: 20,
+                      position: 'relative'
+                    }}
                   >
                     <Plus size={16} className="sm:w-5 sm:h-5 group-hover/btn:rotate-90 transition-transform" /> 
                     ADICIONAR
