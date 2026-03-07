@@ -1140,7 +1140,7 @@ function App() {
       )}
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md shadow-sm border-b border-orange-100">
-        <div className="container mx-auto px-3 sm:px-6 md:px-8 h-14 sm:h-20 flex items-center justify-between gap-3">
+        <div className="container mx-auto px-3 sm:px-6 md:px-8 h-16 sm:h-24 flex items-center justify-between gap-3 py-2 sm:py-3">
           <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1 overflow-hidden">
             {settings.logo ? (
               (() => {
@@ -1302,7 +1302,7 @@ function App() {
       </section>
 
       {/* Categories Bar */}
-      <div className="sticky top-14 sm:top-20 z-40 bg-orange-50/90 backdrop-blur-xl border-b border-orange-100 py-3 sm:py-6">
+      <div className="sticky top-16 sm:top-24 z-40 bg-orange-50/90 backdrop-blur-xl border-b border-orange-100 py-3 sm:py-6">
         <div className="container mx-auto px-3 sm:px-4 flex items-center gap-2 sm:gap-4 overflow-x-auto no-scrollbar">
           <button 
             onClick={() => setActiveCategory('all')} 
