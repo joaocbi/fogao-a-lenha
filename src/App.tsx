@@ -174,6 +174,24 @@ function App() {
   const [lastSyncStatus, setLastSyncStatus] = useState<{ success: boolean; time: string | null; error?: string }>({ success: false, time: null });
   const [showUpdateBanner, setShowUpdateBanner] = useState(false);
   
+  // Check if device is desktop/PC (admin access only on desktop)
+  const [isDesktop, setIsDesktop] = useState(false);
+  
+  useEffect(() => {
+    const checkIsDesktop = () => {
+      // Check screen width (desktop typically >= 1024px)
+      const isLargeScreen = window.innerWidth >= 1024;
+      // Check user agent for mobile devices
+      const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      // Desktop if large screen AND not a mobile device
+      setIsDesktop(isLargeScreen && !isMobileDevice);
+    };
+    
+    checkIsDesktop();
+    window.addEventListener('resize', checkIsDesktop);
+    return () => window.removeEventListener('resize', checkIsDesktop);
+  }, []);
+  
   const [cart, setCart] = useState<{ item: MenuItem; quantity: number }[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
@@ -1234,16 +1252,19 @@ function App() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-            <button 
-              onClick={() => setIsAdminOpen(true)}
-              onTouchStart={(e) => e.stopPropagation()}
-              className="group flex items-center gap-1 sm:gap-2 p-2 sm:p-3 text-stone-400 hover:text-orange-700 hover:bg-orange-50 rounded-xl sm:rounded-2xl transition-all border border-transparent hover:border-orange-100 active:scale-95"
-              title="Painel de Controle (Admin)"
-              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-            >
-              <Settings size={18} className="sm:w-[22px] sm:h-[22px] group-hover:rotate-90 transition-transform duration-500" />
-              <span className="hidden lg:block text-[10px] font-black uppercase tracking-widest">Painel Admin</span>
-            </button>
+            {/* Admin button - only visible on desktop/PC */}
+            {isDesktop && (
+              <button 
+                onClick={() => setIsAdminOpen(true)}
+                onTouchStart={(e) => e.stopPropagation()}
+                className="group flex items-center gap-1 sm:gap-2 p-2 sm:p-3 text-stone-400 hover:text-orange-700 hover:bg-orange-50 rounded-xl sm:rounded-2xl transition-all border border-transparent hover:border-orange-100 active:scale-95"
+                title="Painel de Controle (Admin)"
+                style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+              >
+                <Settings size={18} className="sm:w-[22px] sm:h-[22px] group-hover:rotate-90 transition-transform duration-500" />
+                <span className="hidden lg:block text-[10px] font-black uppercase tracking-widest">Painel Admin</span>
+              </button>
+            )}
             <button 
               onClick={() => setIsCartOpen(true)}
               onTouchStart={(e) => e.stopPropagation()}
@@ -1635,9 +1656,9 @@ function App() {
         </span>
       </a>
 
-      {/* Admin Modal */}
+      {/* Admin Modal - Only accessible on desktop/PC */}
       <AnimatePresence>
-        {isAdminOpen && (
+        {isAdminOpen && isDesktop && (
           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-10">
             <motion.div 
               initial={{ opacity: 0 }} 
