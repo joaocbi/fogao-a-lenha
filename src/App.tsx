@@ -3,7 +3,8 @@ import {
   ShoppingCart, 
   Settings, 
   Menu as MenuIcon, 
-  X, 
+  X,
+  RefreshCw,
   Phone, 
   MapPin, 
   Clock, 
@@ -39,6 +40,85 @@ const generateId = () => {
 };
 
 function App() {
+  // Version check for updates
+  useEffect(() => {
+    const APP_VERSION = '2.1.0';
+    const VERSION_KEY = 'minas_app_version';
+    const BUILD_TIME_KEY = 'minas_build_time';
+    
+    const checkForUpdates = async () => {
+      try {
+        // Get current version and build time from localStorage
+        const storedVersion = localStorage.getItem(VERSION_KEY);
+        const storedBuildTime = localStorage.getItem(BUILD_TIME_KEY);
+        
+        // Fetch the main HTML file with cache busting to check for new build
+        const timestamp = Date.now();
+        const response = await fetch(`/?v=${timestamp}`, { 
+          method: 'GET',
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        });
+        
+        if (response.ok) {
+          const html = await response.text();
+          
+          // Try to extract build hash from script tags or use timestamp
+          // Vite typically includes hash in asset filenames
+          const scriptMatch = html.match(/src="\/assets\/index-([^"]+)\.js"/);
+          const cssMatch = html.match(/href="\/assets\/index-([^"]+)\.css"/);
+          const currentBuildHash = scriptMatch?.[1] || cssMatch?.[1] || timestamp.toString();
+          
+          // Compare with stored build hash
+          if (storedBuildTime !== currentBuildHash || storedVersion !== APP_VERSION) {
+            console.log('🔄 New version detected!', { 
+              storedVersion, 
+              newVersion: APP_VERSION,
+              storedBuildTime,
+              currentBuildHash
+            });
+            setShowUpdateBanner(true);
+            localStorage.setItem(VERSION_KEY, APP_VERSION);
+            localStorage.setItem(BUILD_TIME_KEY, currentBuildHash);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking for updates:', error);
+        // If fetch fails, it might be offline - don't show update banner
+      }
+    };
+    
+    // Check immediately on load
+    const timeout = setTimeout(checkForUpdates, 2000); // Wait 2s after page load
+    
+    // Check every 3 minutes
+    const interval = setInterval(checkForUpdates, 3 * 60 * 1000);
+    
+    // Also check when page becomes visible (user comes back to tab)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        setTimeout(checkForUpdates, 1000);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Check on focus (when user switches back to tab)
+    const handleFocus = () => {
+      setTimeout(checkForUpdates, 1000);
+    };
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      clearTimeout(timeout);
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
+
   // Clean old localStorage keys and check storage usage
   useEffect(() => {
     try {
@@ -92,6 +172,7 @@ function App() {
   const [orders, setOrders] = useState<Order[]>(() => getStoredData('minas_v2_orders', []));
   const [isInitialized, setIsInitialized] = useState(false);
   const [lastSyncStatus, setLastSyncStatus] = useState<{ success: boolean; time: string | null; error?: string }>({ success: false, time: null });
+  const [showUpdateBanner, setShowUpdateBanner] = useState(false);
   
   const [cart, setCart] = useState<{ item: MenuItem; quantity: number }[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -1023,6 +1104,40 @@ function App() {
 
   return (
     <div className="min-h-screen font-sans bg-orange-50 text-stone-900 selection:bg-orange-200 selection:text-orange-900">
+      {/* Update Banner */}
+      {showUpdateBanner && (
+        <div className="fixed top-0 left-0 right-0 z-[9999] bg-orange-600 text-white px-4 py-3 sm:py-4 flex items-center justify-between gap-4 shadow-lg">
+          <div className="flex items-center gap-3 flex-1">
+            <div className="flex-shrink-0">
+              <RefreshCw size={20} className="sm:w-6 sm:h-6 animate-spin" />
+            </div>
+            <div className="flex-1">
+              <p className="font-black text-xs sm:text-sm uppercase tracking-widest">Nova versão disponível!</p>
+              <p className="text-[10px] sm:text-xs opacity-90 mt-0.5">Toque para atualizar e obter as últimas melhorias</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                setShowUpdateBanner(false);
+                // Force reload with cache bypass
+                window.location.reload();
+              }}
+              className="px-4 sm:px-6 py-2 bg-white text-orange-600 font-black text-[10px] sm:text-xs uppercase tracking-widest rounded-lg sm:rounded-xl hover:bg-orange-50 active:scale-95 transition-all"
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+            >
+              Atualizar
+            </button>
+            <button
+              onClick={() => setShowUpdateBanner(false)}
+              className="p-2 text-white/80 hover:text-white active:scale-95 transition-all"
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+            >
+              <X size={18} className="sm:w-5 sm:h-5" />
+            </button>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md shadow-sm border-b border-orange-100">
         <div className="container mx-auto px-3 sm:px-6 md:px-8 h-14 sm:h-20 flex items-center justify-between gap-3">
