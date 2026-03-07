@@ -174,6 +174,35 @@ function App() {
   const [lastSyncStatus, setLastSyncStatus] = useState<{ success: boolean; time: string | null; error?: string }>({ success: false, time: null });
   const [showUpdateBanner, setShowUpdateBanner] = useState(false);
   
+  // Admin authentication - only you have access
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
+  const ADMIN_PASSWORD = 'admin2026'; // Change this to your desired password
+  
+  useEffect(() => {
+    // Check if admin is already authenticated (password stored in localStorage)
+    const storedAuth = localStorage.getItem('minas_admin_authenticated');
+    if (storedAuth === 'true') {
+      setIsAdminAuthenticated(true);
+    }
+  }, []);
+  
+  const handleAdminLogin = () => {
+    const password = prompt('Digite a senha de administrador:');
+    if (password === ADMIN_PASSWORD) {
+      setIsAdminAuthenticated(true);
+      localStorage.setItem('minas_admin_authenticated', 'true');
+      setIsAdminOpen(true);
+    } else if (password !== null) {
+      alert('Senha incorreta. Acesso negado.');
+    }
+  };
+  
+  const handleAdminLogout = () => {
+    setIsAdminAuthenticated(false);
+    setIsAdminOpen(false);
+    localStorage.removeItem('minas_admin_authenticated');
+  };
+  
   // Check if device is desktop/PC (admin access only on desktop)
   const [isDesktop, setIsDesktop] = useState(false);
   
@@ -1252,8 +1281,8 @@ function App() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-            {/* Admin button - only visible on desktop/PC */}
-            {isDesktop && (
+            {/* Admin button - only visible on desktop/PC and when authenticated */}
+            {isDesktop && isAdminAuthenticated && (
               <button 
                 onClick={() => setIsAdminOpen(true)}
                 onTouchStart={(e) => e.stopPropagation()}
@@ -1263,6 +1292,19 @@ function App() {
               >
                 <Settings size={18} className="sm:w-[22px] sm:h-[22px] group-hover:rotate-90 transition-transform duration-500" />
                 <span className="hidden lg:block text-[10px] font-black uppercase tracking-widest">Painel Admin</span>
+              </button>
+            )}
+            {/* Admin login button - only visible on desktop/PC when not authenticated */}
+            {isDesktop && !isAdminAuthenticated && (
+              <button 
+                onClick={handleAdminLogin}
+                onTouchStart={(e) => e.stopPropagation()}
+                className="group flex items-center gap-1 sm:gap-2 p-2 sm:p-3 text-stone-400 hover:text-orange-700 hover:bg-orange-50 rounded-xl sm:rounded-2xl transition-all border border-transparent hover:border-orange-100 active:scale-95"
+                title="Acessar Painel Admin"
+                style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+              >
+                <Settings size={18} className="sm:w-[22px] sm:h-[22px] group-hover:rotate-90 transition-transform duration-500" />
+                <span className="hidden lg:block text-[10px] font-black uppercase tracking-widest">Admin</span>
               </button>
             )}
             <button 
@@ -1656,9 +1698,9 @@ function App() {
         </span>
       </a>
 
-      {/* Admin Modal - Only accessible on desktop/PC */}
+      {/* Admin Modal - Only accessible on desktop/PC and when authenticated */}
       <AnimatePresence>
-        {isAdminOpen && isDesktop && (
+        {isAdminOpen && isDesktop && isAdminAuthenticated && (
           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-10">
             <motion.div 
               initial={{ opacity: 0 }} 
@@ -1807,7 +1849,7 @@ function App() {
                   
                   <div className="mt-auto pt-8 border-t border-stone-100">
                     <button 
-                      onClick={() => setIsAdminOpen(false)}
+                      onClick={handleAdminLogout}
                       className="w-full flex items-center gap-4 px-6 py-5 rounded-[1.5rem] font-black uppercase text-xs tracking-widest text-red-500 hover:bg-red-50 transition-all"
                     >
                       <LogOut size={20} /> Sair do Painel
@@ -2327,7 +2369,7 @@ function App() {
                         </div>
                         {/* Mobile Sair Button */}
                         <button 
-                          onClick={() => setIsAdminOpen(false)}
+                          onClick={handleAdminLogout}
                           className="sm:hidden flex items-center gap-2 px-4 py-2 rounded-xl font-black uppercase text-[10px] tracking-widest text-red-500 hover:bg-red-50 transition-all"
                         >
                           <LogOut size={16} /> Sair
