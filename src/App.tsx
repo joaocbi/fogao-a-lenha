@@ -1540,7 +1540,7 @@ function App() {
                 </div>
               </div>
 
-              <div className="flex flex-1 overflow-hidden">
+              <div className="flex flex-1 overflow-y-auto overflow-x-hidden">
                 {/* Desktop Sidebar */}
                 <aside className="hidden md:flex w-80 border-r border-stone-100 p-8 flex-col gap-3 bg-stone-50/30">
                   {[
@@ -1742,60 +1742,88 @@ function App() {
                                   </button>
                                   {openCategoryDropdown === item.id && (
                                     <div 
-                                      className="absolute top-full left-0 mt-2 bg-white border-2 border-orange-300 rounded-2xl shadow-2xl z-[200] min-w-[200px] max-h-[250px] overflow-y-auto"
-                                      style={{ zIndex: 200 }}
+                                      className="absolute top-full left-0 mt-2 bg-white border-2 border-orange-300 rounded-2xl shadow-2xl z-[200] min-w-[220px]"
+                                      style={{ 
+                                        zIndex: 200, 
+                                        position: 'absolute',
+                                        top: '100%',
+                                        left: 0,
+                                        maxHeight: 'min(500px, calc(100vh - 200px))'
+                                      }}
                                       onClick={(e) => e.stopPropagation()}
                                     >
                                       {categories.length === 0 ? (
                                         <div className="px-4 py-3 text-stone-400 text-xs font-bold">Nenhuma categoria</div>
                                       ) : (
-                                        categories.map(cat => (
-                                          <button
-                                            key={cat.id}
-                                            type="button"
-                                            onClick={(e) => {
-                                              e.preventDefault();
-                                              e.stopPropagation();
-                                              if (cat.id === item.category) {
-                                                setOpenCategoryDropdown(null);
-                                                return;
-                                              }
-                                              
-                                              // Update items state
-                                              const updatedItems = items.map(i => 
-                                                i.id === item.id ? {...i, category: cat.id} : i
-                                              );
-                                              
-                                              // Update state immediately
-                                              setItems(updatedItems);
-                                              
-                                              // Auto-save to localStorage
-                                              try {
-                                                localStorage.setItem('minas_v2_items', JSON.stringify(updatedItems));
-                                                console.log('✅ Category updated:', {
-                                                  item: item.name,
-                                                  oldCategory: item.category,
-                                                  newCategory: cat.id,
-                                                  categoryName: cat.name
-                                                });
-                                              } catch (err) {
-                                                console.error('❌ Error saving items:', err);
-                                                alert('Erro ao salvar alteração. Tente novamente.');
-                                              }
-                                              
-                                              setOpenCategoryDropdown(null);
+                                        <>
+                                          <div className="px-4 py-2 bg-orange-50 border-b border-orange-200 text-[9px] font-black text-orange-700 uppercase tracking-widest sticky top-0 z-10">
+                                            {categories.length} Categoria{categories.length !== 1 ? 's' : ''} Disponíve{categories.length !== 1 ? 'is' : 'l'}
+                                          </div>
+                                          <div 
+                                            className="overflow-y-auto"
+                                            style={{ 
+                                              maxHeight: '400px',
+                                              overscrollBehavior: 'contain'
                                             }}
-                                            className={`w-full text-left px-4 py-3 font-black uppercase text-[10px] tracking-widest transition-all flex items-center gap-2 ${
-                                              cat.id === item.category
-                                                ? 'bg-orange-50 text-orange-700'
-                                                : 'text-stone-700 hover:bg-orange-50 hover:text-orange-700'
-                                            }`}
-                                            style={{ pointerEvents: 'auto' }}
                                           >
-                                            {cat.id === item.category && <CheckCircle size={14} className="flex-shrink-0" />}
-                                            <span>{cat.name}</span>
-                                          </button>
-                                        ))
+                                            {(() => {
+                                              console.log('📋 Rendering ALL categories in dropdown:', {
+                                                total: categories.length,
+                                                allCategories: categories.map((c, i) => `${i + 1}. ${c.name} (ID: ${c.id})`)
+                                              });
+                                              return null;
+                                            })()}
+                                            {categories.map((cat, idx) => {
+                                              return (
+                                                <button
+                                                  key={`${item.id}-${cat.id}-${idx}`}
+                                                  type="button"
+                                                  onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    if (cat.id === item.category) {
+                                                      setOpenCategoryDropdown(null);
+                                                      return;
+                                                    }
+                                                    
+                                                    // Update items state
+                                                    const updatedItems = items.map(i => 
+                                                      i.id === item.id ? {...i, category: cat.id} : i
+                                                    );
+                                                    
+                                                    // Update state immediately
+                                                    setItems(updatedItems);
+                                                    
+                                                    // Auto-save to localStorage
+                                                    try {
+                                                      localStorage.setItem('minas_v2_items', JSON.stringify(updatedItems));
+                                                      console.log('✅ Category updated:', {
+                                                        item: item.name,
+                                                        oldCategory: item.category,
+                                                        newCategory: cat.id,
+                                                        categoryName: cat.name
+                                                      });
+                                                    } catch (err) {
+                                                      console.error('❌ Error saving items:', err);
+                                                      alert('Erro ao salvar alteração. Tente novamente.');
+                                                    }
+                                                    
+                                                    setOpenCategoryDropdown(null);
+                                                  }}
+                                                  className={`w-full text-left px-4 py-3 font-black uppercase text-[10px] tracking-widest transition-all flex items-center gap-2 border-b border-stone-50 last:border-b-0 ${
+                                                    cat.id === item.category
+                                                      ? 'bg-orange-50 text-orange-700'
+                                                      : 'text-stone-700 hover:bg-orange-50 hover:text-orange-700'
+                                                  }`}
+                                                  style={{ pointerEvents: 'auto' }}
+                                                >
+                                                  {cat.id === item.category && <CheckCircle size={14} className="flex-shrink-0" />}
+                                                  <span className="flex-1">{cat.name}</span>
+                                                </button>
+                                              );
+                                            })}
+                                          </div>
+                                        </>
                                       )}
                                     </div>
                                   )}
