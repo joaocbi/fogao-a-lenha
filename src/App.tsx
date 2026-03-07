@@ -1074,15 +1074,19 @@ function App() {
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             <button 
               onClick={() => setIsAdminOpen(true)}
-              className="group flex items-center gap-1 sm:gap-2 p-2 sm:p-3 text-stone-400 hover:text-orange-700 hover:bg-orange-50 rounded-xl sm:rounded-2xl transition-all border border-transparent hover:border-orange-100"
+              onTouchStart={(e) => e.stopPropagation()}
+              className="group flex items-center gap-1 sm:gap-2 p-2 sm:p-3 text-stone-400 hover:text-orange-700 hover:bg-orange-50 rounded-xl sm:rounded-2xl transition-all border border-transparent hover:border-orange-100 active:scale-95"
               title="Painel de Controle (Admin)"
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
             >
               <Settings size={18} className="sm:w-[22px] sm:h-[22px] group-hover:rotate-90 transition-transform duration-500" />
               <span className="hidden lg:block text-[10px] font-black uppercase tracking-widest">Painel Admin</span>
             </button>
             <button 
               onClick={() => setIsCartOpen(true)}
-              className="relative p-2 sm:p-3 bg-orange-50 text-orange-700 hover:bg-orange-100 rounded-xl sm:rounded-2xl transition-all"
+              onTouchStart={(e) => e.stopPropagation()}
+              className="relative p-2 sm:p-3 bg-orange-50 text-orange-700 hover:bg-orange-100 rounded-xl sm:rounded-2xl transition-all active:scale-95"
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
             >
               <ShoppingCart size={18} className="sm:w-[22px] sm:h-[22px]" />
               {cart.length > 0 && (
@@ -1187,11 +1191,13 @@ function App() {
         <div className="container mx-auto px-3 sm:px-4 flex items-center gap-2 sm:gap-4 overflow-x-auto no-scrollbar">
           <button 
             onClick={() => setActiveCategory('all')} 
-            className={`px-4 sm:px-8 py-2 sm:py-3 rounded-xl sm:rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest whitespace-nowrap transition-all ${
+            onTouchStart={(e) => e.stopPropagation()}
+            className={`px-4 sm:px-8 py-2 sm:py-3 rounded-xl sm:rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest whitespace-nowrap transition-all active:scale-95 ${
               activeCategory === 'all' 
                 ? 'bg-orange-700 text-white shadow-xl shadow-orange-700/20 -translate-y-0.5' 
                 : 'bg-white text-stone-400 hover:text-stone-800 hover:bg-orange-100'
             }`}
+            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
           >
             Todos
           </button>
@@ -1199,11 +1205,13 @@ function App() {
             <button 
               key={cat.id} 
               onClick={() => setActiveCategory(cat.id)} 
-              className={`px-4 sm:px-8 py-2 sm:py-3 rounded-xl sm:rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest whitespace-nowrap transition-all ${
+              onTouchStart={(e) => e.stopPropagation()}
+              className={`px-4 sm:px-8 py-2 sm:py-3 rounded-xl sm:rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest whitespace-nowrap transition-all active:scale-95 ${
                 activeCategory === cat.id 
                   ? 'bg-orange-700 text-white shadow-xl shadow-orange-700/20 -translate-y-0.5' 
                   : 'bg-white text-stone-400 hover:text-stone-800 hover:bg-orange-100'
               }`}
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
             >
               {cat.name}
             </button>
@@ -1278,15 +1286,24 @@ function App() {
                       }
                       addToCart(item);
                     }}
+                    onTouchStart={(e) => {
+                      e.stopPropagation();
+                      if (!item.available) {
+                        e.preventDefault();
+                        return;
+                      }
+                    }}
                     onMouseDown={(e) => {
                       e.stopPropagation();
                     }}
                     disabled={!item.available} 
-                    className="mt-auto w-full bg-stone-50 hover:bg-orange-700 text-stone-800 hover:text-white font-black py-3 sm:py-4 md:py-5 rounded-xl sm:rounded-[1.5rem] transition-all flex items-center justify-center gap-2 sm:gap-3 disabled:opacity-30 disabled:cursor-not-allowed group/btn text-xs sm:text-sm active:scale-95 relative z-20"
+                    className="mt-auto w-full bg-stone-50 hover:bg-orange-700 text-stone-800 hover:text-white font-black py-3 sm:py-4 md:py-5 rounded-xl sm:rounded-[1.5rem] transition-all flex items-center justify-center gap-2 sm:gap-3 disabled:opacity-30 disabled:cursor-not-allowed group/btn text-xs sm:text-sm active:scale-95 relative z-20 touch-manipulation"
                     style={{ 
                       pointerEvents: 'auto', 
                       zIndex: 20,
-                      position: 'relative'
+                      position: 'relative',
+                      touchAction: 'manipulation',
+                      WebkitTapHighlightColor: 'transparent'
                     }}
                   >
                     <Plus size={16} className="sm:w-5 sm:h-5 group-hover/btn:rotate-90 transition-transform" /> 
