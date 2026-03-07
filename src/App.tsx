@@ -469,13 +469,24 @@ function App() {
   const [paymentMethod, setPaymentMethod] = useState('Dinheiro');
 
   const addToCart = (item: MenuItem) => {
+    console.log('🛒 Adding to cart:', item.name, 'Available:', item.available);
+    if (!item.available) {
+      console.warn('⚠️ Item is not available:', item.name);
+      return;
+    }
     setCart(prev => {
       const existing = prev.find(i => i.item.id === item.id);
       if (existing) {
-        return prev.map(i => i.item.id === item.id ? { ...i, quantity: i.quantity + 1 } : i);
+        const updated = prev.map(i => i.item.id === item.id ? { ...i, quantity: i.quantity + 1 } : i);
+        console.log('✅ Item quantity increased. Cart:', updated);
+        return updated;
       }
-      return [...prev, { item, quantity: 1 }];
+      const updated = [...prev, { item, quantity: 1 }];
+      console.log('✅ Item added to cart. Cart:', updated);
+      return updated;
     });
+    // Open cart after adding
+    setIsCartOpen(true);
   };
 
   const removeFromCart = (itemId: string) => {
@@ -1248,9 +1259,16 @@ function App() {
                   <h4 className="text-lg sm:text-xl md:text-2xl font-black text-stone-900 mb-2 sm:mb-3 group-hover:text-orange-700 transition-colors">{item.name}</h4>
                   <p className="text-stone-500 text-xs sm:text-sm mb-4 sm:mb-6 md:mb-8 leading-relaxed line-clamp-3">{item.description}</p>
                   <button 
-                    onClick={() => addToCart(item)} 
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log('🔘 Add button clicked for:', item.name);
+                      addToCart(item);
+                    }}
                     disabled={!item.available} 
-                    className="mt-auto w-full bg-stone-50 hover:bg-orange-700 text-stone-800 hover:text-white font-black py-3 sm:py-4 md:py-5 rounded-xl sm:rounded-[1.5rem] transition-all flex items-center justify-center gap-2 sm:gap-3 disabled:opacity-30 disabled:cursor-not-allowed group/btn text-xs sm:text-sm"
+                    className="mt-auto w-full bg-stone-50 hover:bg-orange-700 text-stone-800 hover:text-white font-black py-3 sm:py-4 md:py-5 rounded-xl sm:rounded-[1.5rem] transition-all flex items-center justify-center gap-2 sm:gap-3 disabled:opacity-30 disabled:cursor-not-allowed group/btn text-xs sm:text-sm active:scale-95"
+                    style={{ pointerEvents: 'auto', zIndex: 10 }}
                   >
                     <Plus size={16} className="sm:w-5 sm:h-5 group-hover/btn:rotate-90 transition-transform" /> 
                     ADICIONAR
