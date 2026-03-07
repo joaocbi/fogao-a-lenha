@@ -398,14 +398,61 @@ function App() {
 
   // Load from cloud on mount - preserve local images
   useEffect(() => {
-    loadFromCloud(true).then((loaded) => {
-      if (loaded) {
-        console.log('Initial data loaded from cloud (local images preserved)');
-      } else {
-        console.log('No cloud data found, using localStorage');
+    let lastCloudUpdate: string | null = null;
+    
+    const checkCloudUpdates = async () => {
+      try {
+        const response = await fetch(getApiUrl());
+        const result = await response.json();
+        
+        if (result.success && result.data && result.lastUpdated) {
+          // Check if cloud data is newer than what we have
+          if (lastCloudUpdate !== result.lastUpdated) {
+            const wasNew = lastCloudUpdate !== null; // First load doesn't count as "new"
+            lastCloudUpdate = result.lastUpdated;
+            
+            if (wasNew) {
+              console.log('🔄 New data detected in cloud, updating...');
+              await loadFromCloud(true);
+              // Show a subtle notification that data was updated
+              setLastSyncStatus({
+                success: true,
+                time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+              });
+            } else {
+              // Initial load
+              await loadFromCloud(true);
+              console.log('Initial data loaded from cloud (local images preserved)');
+            }
+          }
+        } else {
+          console.log('No cloud data found, using localStorage');
+        }
+        setIsInitialized(true);
+      } catch (error) {
+        console.error('Error checking cloud updates:', error);
+        setIsInitialized(true);
       }
-      setIsInitialized(true);
-    });
+    };
+    
+    // Initial load
+    checkCloudUpdates();
+    
+    // Check for updates every 30 seconds
+    const interval = setInterval(checkCloudUpdates, 30 * 1000);
+    
+    // Also check when page becomes visible (user comes back to tab)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        checkCloudUpdates();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   // Close category dropdown when clicking outside
