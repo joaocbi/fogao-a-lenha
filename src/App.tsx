@@ -19,7 +19,9 @@ import {
   Upload,
   Video,
   Image as ImageIcon,
-  CheckCircle
+  CheckCircle,
+  ChevronDown,
+  Tag
 } from 'lucide-react';
 import type { MenuItem, Category, RestaurantSettings, Order } from './types';
 import { initialCategories, initialMenuItems, initialSettings } from './data';
@@ -89,11 +91,13 @@ function App() {
   const [settings, setSettings] = useState<RestaurantSettings>(() => getStoredData('minas_v2_settings', initialSettings));
   const [orders, setOrders] = useState<Order[]>(() => getStoredData('minas_v2_orders', []));
   const [isInitialized, setIsInitialized] = useState(false);
+  const [lastSyncStatus, setLastSyncStatus] = useState<{ success: boolean; time: string | null; error?: string }>({ success: false, time: null });
   
   const [cart, setCart] = useState<{ item: MenuItem; quantity: number }[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string>('all');
+  const [openCategoryDropdown, setOpenCategoryDropdown] = useState<string | null>(null);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isPaymentReviewOpen, setIsPaymentReviewOpen] = useState(false);
   const [orderConfirmation, setOrderConfirmation] = useState<Order | null>(null);
@@ -189,13 +193,34 @@ function App() {
       const result = await response.json();
       if (result.success) {
         console.log('Data synced to cloud successfully');
+        const now = new Date();
+        setLastSyncStatus({ 
+          success: true, 
+          time: now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+        });
+        // Also save sync time to localStorage
+        try {
+          localStorage.setItem('minas_v2_lastSync', JSON.stringify({ time: now.toISOString(), success: true }));
+        } catch (e) {
+          console.error('Error saving sync time:', e);
+        }
         return true;
       } else {
         console.error('Failed to sync to cloud:', result.error);
+        setLastSyncStatus({ 
+          success: false, 
+          time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+          error: result.error 
+        });
         return false;
       }
     } catch (error) {
       console.error('Error syncing to cloud:', error);
+      setLastSyncStatus({ 
+        success: false, 
+        time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        error: error instanceof Error ? error.message : 'Erro desconhecido'
+      });
       return false;
     }
   };
@@ -228,10 +253,16 @@ function App() {
             mergedSettings = {
               ...cloudData.settings,
               logo: settings.logo || cloudData.settings.logo || '',
+              logoSize: cloudData.settings.logoSize || settings.logoSize,
+              logoSizePx: cloudData.settings.logoSizePx || settings.logoSizePx,
               heroVideo: settings.heroVideo || cloudData.settings.heroVideo || '',
               heroImage: settings.heroImage || cloudData.settings.heroImage || '',
               aboutImage1: settings.aboutImage1 || cloudData.settings.aboutImage1 || '',
-              aboutImage2: settings.aboutImage2 || cloudData.settings.aboutImage2 || ''
+              aboutImage1Size: cloudData.settings.aboutImage1Size || settings.aboutImage1Size,
+              aboutImage1SizePx: cloudData.settings.aboutImage1SizePx || settings.aboutImage1SizePx,
+              aboutImage2: settings.aboutImage2 || cloudData.settings.aboutImage2 || '',
+              aboutImage2Size: cloudData.settings.aboutImage2Size || settings.aboutImage2Size,
+              aboutImage2SizePx: cloudData.settings.aboutImage2SizePx || settings.aboutImage2SizePx
             };
           }
           
@@ -265,6 +296,25 @@ function App() {
     }
   };
 
+  // Load last sync status from localStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('minas_v2_lastSync');
+      if (stored) {
+        const syncData = JSON.parse(stored);
+        if (syncData.time) {
+          const syncTime = new Date(syncData.time);
+          setLastSyncStatus({
+            success: syncData.success || false,
+            time: syncTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+          });
+        }
+      }
+    } catch (e) {
+      console.error('Error loading sync status:', e);
+    }
+  }, []);
+
   // Load from cloud on mount - preserve local images
   useEffect(() => {
     loadFromCloud(true).then((loaded) => {
@@ -276,6 +326,21 @@ function App() {
       setIsInitialized(true);
     });
   }, []);
+
+  // Close category dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.category-dropdown-container')) {
+        setOpenCategoryDropdown(null);
+      }
+    };
+
+    if (openCategoryDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [openCategoryDropdown]);
 
   // Auto-sync to cloud when data changes (debounced)
   useEffect(() => {
@@ -789,10 +854,16 @@ function App() {
       const mergedSettings: RestaurantSettings = {
         ...importedData.settings,
         logo: settings.logo || importedData.settings.logo || '', // Keep existing logo
+        logoSize: importedData.settings.logoSize || settings.logoSize,
+        logoSizePx: importedData.settings.logoSizePx || settings.logoSizePx,
         heroVideo: settings.heroVideo || importedData.settings.heroVideo || '', // Keep existing video
         heroImage: settings.heroImage || importedData.settings.heroImage || '', // Keep existing hero image
         aboutImage1: settings.aboutImage1 || importedData.settings.aboutImage1 || '', // Keep existing about image 1
-        aboutImage2: settings.aboutImage2 || importedData.settings.aboutImage2 || '' // Keep existing about image 2
+        aboutImage1Size: importedData.settings.aboutImage1Size || settings.aboutImage1Size,
+        aboutImage1SizePx: importedData.settings.aboutImage1SizePx || settings.aboutImage1SizePx,
+        aboutImage2: settings.aboutImage2 || importedData.settings.aboutImage2 || '', // Keep existing about image 2
+        aboutImage2Size: importedData.settings.aboutImage2Size || settings.aboutImage2Size,
+        aboutImage2SizePx: importedData.settings.aboutImage2SizePx || settings.aboutImage2SizePx
       };
       setSettings(mergedSettings);
     } else {
@@ -1215,28 +1286,68 @@ function App() {
           <div className="relative group mt-8 md:mt-0">
             <div className="absolute -inset-4 bg-orange-700/20 blur-[100px] rounded-full group-hover:bg-orange-700/30 transition-all duration-700" />
             <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-6 relative">
-              <img 
-                key={`about-1-${settings.aboutImage1 ? settings.aboutImage1.substring(0, 30) : 'default'}`}
-                src={settings.aboutImage1 || "https://images.unsplash.com/photo-1544148103-0773bf10d330?q=80&w=2070&auto=format&fit=crop"} 
-                className="rounded-2xl sm:rounded-3xl h-[200px] sm:h-[300px] md:h-[400px] lg:h-[450px] w-full object-cover shadow-2xl rotate-3" 
-                alt="Ambiente"
-                loading="lazy"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = "https://images.unsplash.com/photo-1544148103-0773bf10d330?q=80&w=2070&auto=format&fit=crop";
-                }}
-              />
-              <img 
-                key={`about-2-${settings.aboutImage2 ? settings.aboutImage2.substring(0, 30) : 'default'}`}
-                src={settings.aboutImage2 || "https://images.unsplash.com/photo-1541544741938-0af808871cc0?q=80&w=2069&auto=format&fit=crop"} 
-                className="rounded-2xl sm:rounded-3xl h-[200px] sm:h-[300px] md:h-[400px] lg:h-[450px] w-full object-cover shadow-2xl -rotate-3 mt-6 sm:mt-8 md:mt-12" 
-                alt="Comida"
-                loading="lazy"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = "https://images.unsplash.com/photo-1541544741938-0af808871cc0?q=80&w=2069&auto=format&fit=crop";
-                }}
-              />
+              {(() => {
+                const getImage1HeightClasses = () => {
+                  if (settings.aboutImage1Size === 'custom' && settings.aboutImage1SizePx) {
+                    return '';
+                  }
+                  const sizeMap: Record<string, string> = {
+                    small: 'h-[150px] sm:h-[200px] md:h-[250px] lg:h-[300px]',
+                    medium: 'h-[200px] sm:h-[300px] md:h-[400px] lg:h-[450px]',
+                    large: 'h-[250px] sm:h-[350px] md:h-[500px] lg:h-[600px]',
+                  };
+                  return sizeMap[settings.aboutImage1Size || 'medium'] || sizeMap.medium;
+                };
+                const image1HeightClasses = getImage1HeightClasses();
+                const image1CustomStyle = settings.aboutImage1Size === 'custom' && settings.aboutImage1SizePx
+                  ? { height: `${settings.aboutImage1SizePx}px` }
+                  : {};
+                return (
+                  <img 
+                    key={`about-1-${settings.aboutImage1 ? settings.aboutImage1.substring(0, 30) : 'default'}`}
+                    src={settings.aboutImage1 || "https://images.unsplash.com/photo-1544148103-0773bf10d330?q=80&w=2070&auto=format&fit=crop"} 
+                    className={`rounded-2xl sm:rounded-3xl ${image1HeightClasses} w-full object-cover shadow-2xl rotate-3`}
+                    style={image1CustomStyle}
+                    alt="Ambiente"
+                    loading="lazy"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = "https://images.unsplash.com/photo-1544148103-0773bf10d330?q=80&w=2070&auto=format&fit=crop";
+                    }}
+                  />
+                );
+              })()}
+              {(() => {
+                const getImage2HeightClasses = () => {
+                  if (settings.aboutImage2Size === 'custom' && settings.aboutImage2SizePx) {
+                    return '';
+                  }
+                  const sizeMap: Record<string, string> = {
+                    small: 'h-[150px] sm:h-[200px] md:h-[250px] lg:h-[300px]',
+                    medium: 'h-[200px] sm:h-[300px] md:h-[400px] lg:h-[450px]',
+                    large: 'h-[250px] sm:h-[350px] md:h-[500px] lg:h-[600px]',
+                  };
+                  return sizeMap[settings.aboutImage2Size || 'medium'] || sizeMap.medium;
+                };
+                const image2HeightClasses = getImage2HeightClasses();
+                const image2CustomStyle = settings.aboutImage2Size === 'custom' && settings.aboutImage2SizePx
+                  ? { height: `${settings.aboutImage2SizePx}px` }
+                  : {};
+                return (
+                  <img 
+                    key={`about-2-${settings.aboutImage2 ? settings.aboutImage2.substring(0, 30) : 'default'}`}
+                    src={settings.aboutImage2 || "https://images.unsplash.com/photo-1541544741938-0af808871cc0?q=80&w=2069&auto=format&fit=crop"} 
+                    className={`rounded-2xl sm:rounded-3xl ${image2HeightClasses} w-full object-cover shadow-2xl -rotate-3 mt-6 sm:mt-8 md:mt-12`}
+                    style={image2CustomStyle}
+                    alt="Comida"
+                    loading="lazy"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = "https://images.unsplash.com/photo-1541544741938-0af808871cc0?q=80&w=2069&auto=format&fit=crop";
+                    }}
+                  />
+                );
+              })()}
             </div>
           </div>
         </div>
@@ -1341,6 +1452,62 @@ function App() {
                 >
                   <X size={20} className="sm:w-7 sm:h-7" />
                 </button>
+              </div>
+
+              {/* Sync Status Banner */}
+              <div className={`px-4 sm:px-6 md:px-10 py-3 sm:py-4 border-b ${
+                lastSyncStatus.success ? 'bg-green-50/50 border-green-200' : 'bg-yellow-50/50 border-yellow-200'
+              }`}>
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                      lastSyncStatus.success ? 'bg-green-500 animate-pulse' : 'bg-yellow-500'
+                    }`} />
+                    <div className="min-w-0">
+                      <p className={`text-xs sm:text-sm font-black uppercase tracking-widest ${
+                        lastSyncStatus.success ? 'text-green-700' : 'text-yellow-700'
+                      }`}>
+                        {lastSyncStatus.success 
+                          ? `✅ Última sincronização: ${lastSyncStatus.time || 'Nunca'}`
+                          : '⚠️ Armazenamento temporário - Faça backup regularmente'
+                        }
+                      </p>
+                      {lastSyncStatus.error && (
+                        <p className="text-[10px] text-yellow-600 mt-1">Erro: {lastSyncStatus.error}</p>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    onClick={async (e) => {
+                      const button = e.currentTarget;
+                      const originalText = button.textContent;
+                      button.textContent = 'Sincronizando...';
+                      button.disabled = true;
+                      const success = await syncToCloud();
+                      if (success) {
+                        button.textContent = '✅ Sincronizado!';
+                        setTimeout(() => {
+                          button.textContent = originalText || 'Sincronizar Agora';
+                          button.disabled = false;
+                        }, 2000);
+                      } else {
+                        button.textContent = '❌ Erro';
+                        setTimeout(() => {
+                          button.textContent = originalText || 'Sincronizar Agora';
+                          button.disabled = false;
+                        }, 2000);
+                      }
+                    }}
+                    className="px-4 sm:px-6 py-2 sm:py-2.5 bg-orange-700 hover:bg-orange-800 text-white font-black uppercase tracking-widest rounded-xl sm:rounded-2xl transition-all active:scale-95 text-[10px] sm:text-xs whitespace-nowrap flex-shrink-0 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    ☁️ Sincronizar Agora
+                  </button>
+                </div>
+                <div className="mt-2 pt-2 border-t border-yellow-200/50">
+                  <p className="text-[10px] text-yellow-700/80 font-medium">
+                    ⚠️ <strong>Importante:</strong> O armazenamento na nuvem é temporário. Sempre faça backup completo antes de fechar o navegador.
+                  </p>
+                </div>
               </div>
 
               {/* Mobile Tabs - Horizontal */}
@@ -1544,11 +1711,95 @@ function App() {
                               <img src={item.image || "https://images.unsplash.com/photo-1514327605112-b887c0e61c0a?q=80&w=2070&auto=format&fit=crop"} className="w-full h-full object-cover" alt="" />
                             </div>
                             <div className="flex-1 min-w-[200px]">
-                              <div className="flex items-center gap-4 mb-2">
+                              <div className="flex items-center gap-4 mb-2 flex-wrap">
                                 <h5 className="font-black text-xl text-stone-900">{item.name}</h5>
-                                <span className="px-3 py-1 bg-orange-50 text-orange-700 rounded-full font-black uppercase text-[10px] tracking-widest">
-                                  {categories.find(c => c.id === item.category)?.name}
-                                </span>
+                                <div className="relative z-[100] category-dropdown-container" style={{ position: 'relative' }}>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      console.log('Button clicked for item:', item.id);
+                                      setOpenCategoryDropdown(openCategoryDropdown === item.id ? null : item.id);
+                                    }}
+                                    onMouseDown={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                    }}
+                                    className="px-4 py-2 bg-orange-50 text-orange-700 rounded-full font-black uppercase text-[10px] tracking-widest border-2 border-orange-300 hover:border-orange-500 hover:bg-orange-100 active:bg-orange-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 cursor-pointer transition-all min-w-[140px] flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
+                                    title="Clique para alterar a categoria"
+                                    style={{ 
+                                      pointerEvents: 'auto',
+                                      zIndex: 100,
+                                      position: 'relative'
+                                    }}
+                                  >
+                                    <Tag size={14} className="flex-shrink-0" />
+                                    <span className="truncate text-xs">
+                                      {categories.find(c => c.id === item.category)?.name || 'Sem categoria'}
+                                    </span>
+                                    <ChevronDown size={14} className={`flex-shrink-0 transition-transform ${openCategoryDropdown === item.id ? 'rotate-180' : ''}`} />
+                                  </button>
+                                  {openCategoryDropdown === item.id && (
+                                    <div 
+                                      className="absolute top-full left-0 mt-2 bg-white border-2 border-orange-300 rounded-2xl shadow-2xl z-[200] min-w-[200px] max-h-[250px] overflow-y-auto"
+                                      style={{ zIndex: 200 }}
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      {categories.length === 0 ? (
+                                        <div className="px-4 py-3 text-stone-400 text-xs font-bold">Nenhuma categoria</div>
+                                      ) : (
+                                        categories.map(cat => (
+                                          <button
+                                            key={cat.id}
+                                            type="button"
+                                            onClick={(e) => {
+                                              e.preventDefault();
+                                              e.stopPropagation();
+                                              if (cat.id === item.category) {
+                                                setOpenCategoryDropdown(null);
+                                                return;
+                                              }
+                                              
+                                              // Update items state
+                                              const updatedItems = items.map(i => 
+                                                i.id === item.id ? {...i, category: cat.id} : i
+                                              );
+                                              
+                                              // Update state immediately
+                                              setItems(updatedItems);
+                                              
+                                              // Auto-save to localStorage
+                                              try {
+                                                localStorage.setItem('minas_v2_items', JSON.stringify(updatedItems));
+                                                console.log('✅ Category updated:', {
+                                                  item: item.name,
+                                                  oldCategory: item.category,
+                                                  newCategory: cat.id,
+                                                  categoryName: cat.name
+                                                });
+                                              } catch (err) {
+                                                console.error('❌ Error saving items:', err);
+                                                alert('Erro ao salvar alteração. Tente novamente.');
+                                              }
+                                              
+                                              setOpenCategoryDropdown(null);
+                                            }}
+                                            className={`w-full text-left px-4 py-3 font-black uppercase text-[10px] tracking-widest transition-all flex items-center gap-2 ${
+                                              cat.id === item.category
+                                                ? 'bg-orange-50 text-orange-700'
+                                                : 'text-stone-700 hover:bg-orange-50 hover:text-orange-700'
+                                            }`}
+                                            style={{ pointerEvents: 'auto' }}
+                                          >
+                                            {cat.id === item.category && <CheckCircle size={14} className="flex-shrink-0" />}
+                                            <span>{cat.name}</span>
+                                          </button>
+                                        ))
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                               <p className="text-stone-400 text-sm line-clamp-1 font-medium">{item.description}</p>
                               <p className="text-orange-700 font-black text-lg mt-2">{item.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
@@ -1663,7 +1914,17 @@ function App() {
                         <button 
                           onClick={() => {
                             const name = prompt('Nome da categoria:');
-                            if (name) setCategories([...categories, { id: generateId(), name }]);
+                            if (name && name.trim()) {
+                              const newCategory = { id: generateId(), name: name.trim() };
+                              const updatedCategories = [...categories, newCategory];
+                              setCategories(updatedCategories);
+                              // Auto-save to localStorage
+                              try {
+                                localStorage.setItem('minas_v2_categories', JSON.stringify(updatedCategories));
+                              } catch (e) {
+                                console.error('Error saving categories:', e);
+                              }
+                            }
                           }}
                           className="px-8 py-4 bg-orange-700 hover:bg-orange-800 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-2xl shadow-orange-700/20 transition-all active:scale-95 flex items-center gap-3"
                         >
@@ -1672,28 +1933,122 @@ function App() {
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {categories.map(cat => (
+                        {categories.map(cat => {
+                          const itemsInCategory = items.filter(item => item.category === cat.id).length;
+                          return (
                           <div key={cat.id} className="p-8 bg-white border border-stone-100 rounded-[2.5rem] flex items-center justify-between shadow-sm group hover:border-orange-200 transition-colors">
-                            <span className="font-black text-lg text-stone-900 tracking-tight">{cat.name}</span>
+                            <div className="flex flex-col">
+                              <span className="font-black text-lg text-stone-900 tracking-tight">{cat.name}</span>
+                              <span className="text-xs text-stone-400 font-bold uppercase tracking-widest mt-1">
+                                {itemsInCategory} {itemsInCategory === 1 ? 'item' : 'itens'}
+                              </span>
+                            </div>
                             <div className="flex gap-2">
                               <button 
                                 onClick={() => {
                                   const newName = prompt('Novo nome:', cat.name);
-                                  if (newName) setCategories(categories.map(c => c.id === cat.id ? {...c, name: newName} : c));
+                                  if (newName && newName.trim()) {
+                                    const updatedCategories = categories.map(c => c.id === cat.id ? {...c, name: newName.trim()} : c);
+                                    setCategories(updatedCategories);
+                                    // Update items that use this category
+                                    const updatedItems = items.map(item => 
+                                      item.category === cat.id ? {...item, category: cat.id} : item
+                                    );
+                                    setItems(updatedItems);
+                                    // Auto-save to localStorage
+                                    try {
+                                      localStorage.setItem('minas_v2_categories', JSON.stringify(updatedCategories));
+                                      localStorage.setItem('minas_v2_items', JSON.stringify(updatedItems));
+                                    } catch (e) {
+                                      console.error('Error saving categories/items:', e);
+                                    }
+                                  }
                                 }}
                                 className="w-10 h-10 flex items-center justify-center text-stone-300 hover:text-orange-700 hover:bg-orange-50 rounded-xl transition-all"
+                                title="Editar categoria"
                               >
                                 <Edit size={18} />
                               </button>
                               <button 
-                                onClick={() => setCategories(categories.filter(c => c.id !== cat.id))}
+                                onClick={() => {
+                                  // Check if category is being used by any items
+                                  const itemsUsingCategory = items.filter(item => item.category === cat.id);
+                                  
+                                  if (itemsUsingCategory.length > 0) {
+                                    const itemCount = itemsUsingCategory.length;
+                                    // Find first available category (not the one being deleted)
+                                    const firstAvailableCategory = categories.find(c => c.id !== cat.id);
+                                    
+                                    if (firstAvailableCategory) {
+                                      const confirmMessage = `Esta categoria está sendo usada por ${itemCount} item(ns) no cardápio.\n\nDeseja realmente excluir?\n\nOs itens serão movidos para a categoria "${firstAvailableCategory.name}".`;
+                                      
+                                      if (window.confirm(confirmMessage)) {
+                                        // Remove category and update items
+                                        const updatedCategories = categories.filter(c => c.id !== cat.id);
+                                        setCategories(updatedCategories);
+                                        
+                                        // Move items to first available category
+                                        const updatedItems = items.map(item => 
+                                          item.category === cat.id ? {...item, category: firstAvailableCategory.id} : item
+                                        );
+                                        setItems(updatedItems);
+                                        
+                                        // Auto-save to localStorage
+                                        try {
+                                          localStorage.setItem('minas_v2_categories', JSON.stringify(updatedCategories));
+                                          localStorage.setItem('minas_v2_items', JSON.stringify(updatedItems));
+                                        } catch (e) {
+                                          console.error('Error saving categories/items:', e);
+                                        }
+                                      }
+                                    } else {
+                                      // No other categories available, create a default one
+                                      const confirmMessage = `Esta categoria está sendo usada por ${itemCount} item(ns) no cardápio.\n\nDeseja realmente excluir?\n\nSerá criada uma categoria "Sem Categoria" para os itens.`;
+                                      
+                                      if (window.confirm(confirmMessage)) {
+                                        // Create default category
+                                        const defaultCategory = { id: generateId(), name: 'Sem Categoria' };
+                                        const updatedCategories = [defaultCategory, ...categories.filter(c => c.id !== cat.id)];
+                                        setCategories(updatedCategories);
+                                        
+                                        // Move items to default category
+                                        const updatedItems = items.map(item => 
+                                          item.category === cat.id ? {...item, category: defaultCategory.id} : item
+                                        );
+                                        setItems(updatedItems);
+                                        
+                                        // Auto-save to localStorage
+                                        try {
+                                          localStorage.setItem('minas_v2_categories', JSON.stringify(updatedCategories));
+                                          localStorage.setItem('minas_v2_items', JSON.stringify(updatedItems));
+                                        } catch (e) {
+                                          console.error('Error saving categories/items:', e);
+                                        }
+                                      }
+                                    }
+                                  } else {
+                                    // No items using this category, safe to delete
+                                    if (window.confirm(`Deseja realmente excluir a categoria "${cat.name}"?`)) {
+                                      const updatedCategories = categories.filter(c => c.id !== cat.id);
+                                      setCategories(updatedCategories);
+                                      // Auto-save to localStorage
+                                      try {
+                                        localStorage.setItem('minas_v2_categories', JSON.stringify(updatedCategories));
+                                      } catch (e) {
+                                        console.error('Error saving categories:', e);
+                                      }
+                                    }
+                                  }
+                                }}
                                 className="w-10 h-10 flex items-center justify-center text-stone-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                                title="Excluir categoria"
                               >
                                 <Trash2 size={18} />
                               </button>
                             </div>
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -1968,60 +2323,200 @@ function App() {
                             <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.3em] flex items-center gap-2">
                               <ImageIcon size={14} className="text-orange-700" /> Imagens "Sobre Nós"
                             </label>
-                            <div className="flex flex-col gap-3 p-6 bg-stone-50/50 rounded-3xl border border-stone-100">
-                              <div className="flex gap-2">
-                                <button 
-                                  onClick={() => {
-                                    const input = document.createElement('input');
-                                    input.type = 'file';
-                                    input.accept = 'image/*';
-                                    input.onchange = (e) => {
-                                      const file = (e.target as HTMLInputElement).files?.[0];
-                                      if (file) {
-                                        handleFileUpload(file, (base) => {
-                                          const updatedSettings = {...settings, aboutImage1: base};
-                                          setSettings(updatedSettings);
-                                          // Force immediate save
-                                          try {
-                                            localStorage.setItem('minas_v2_settings', JSON.stringify(updatedSettings));
-                                          } catch (e) {
-                                            console.error('Error saving aboutImage1:', e);
-                                          }
-                                        });
-                                      }
-                                    };
-                                    input.click();
-                                  }}
-                                  className="flex-1 py-3 bg-white hover:bg-orange-50 text-orange-700 border border-orange-200 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all"
-                                >
-                                  Img 1 {settings.aboutImage1 ? '✓' : '+'}
-                                </button>
-                                <button 
-                                  onClick={() => {
-                                    const input = document.createElement('input');
-                                    input.type = 'file';
-                                    input.accept = 'image/*';
-                                    input.onchange = (e) => {
-                                      const file = (e.target as HTMLInputElement).files?.[0];
-                                      if (file) {
-                                        handleFileUpload(file, (base) => {
-                                          const updatedSettings = {...settings, aboutImage2: base};
-                                          setSettings(updatedSettings);
-                                          // Force immediate save
-                                          try {
-                                            localStorage.setItem('minas_v2_settings', JSON.stringify(updatedSettings));
-                                          } catch (e) {
-                                            console.error('Error saving aboutImage2:', e);
-                                          }
-                                        });
-                                      }
-                                    };
-                                    input.click();
-                                  }}
-                                  className="flex-1 py-3 bg-white hover:bg-orange-50 text-orange-700 border border-orange-200 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all"
-                                >
-                                  Img 2 {settings.aboutImage2 ? '✓' : '+'}
-                                </button>
+                            <div className="flex flex-col gap-4 p-6 bg-stone-50/50 rounded-3xl border border-stone-100">
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="flex flex-col gap-2">
+                                  <div className="w-full h-32 bg-white rounded-2xl border border-stone-200 flex items-center justify-center overflow-hidden p-2">
+                                    {settings.aboutImage1 ? (
+                                      <img src={settings.aboutImage1} className="w-full h-full object-contain object-center" alt="About Image 1" style={{ maxWidth: '100%', maxHeight: '100%' }} />
+                                    ) : (
+                                      <ImageIcon size={32} className="text-stone-200" />
+                                    )}
+                                  </div>
+                                  <button 
+                                    onClick={() => {
+                                      const input = document.createElement('input');
+                                      input.type = 'file';
+                                      input.accept = 'image/*';
+                                      input.onchange = (e) => {
+                                        const file = (e.target as HTMLInputElement).files?.[0];
+                                        if (file) {
+                                          handleFileUpload(file, (base) => {
+                                            const updatedSettings = {...settings, aboutImage1: base};
+                                            setSettings(updatedSettings);
+                                            // Force immediate save
+                                            try {
+                                              localStorage.setItem('minas_v2_settings', JSON.stringify(updatedSettings));
+                                            } catch (e) {
+                                              console.error('Error saving aboutImage1:', e);
+                                            }
+                                          });
+                                        }
+                                      };
+                                      input.click();
+                                    }}
+                                    className="w-full py-3 bg-white hover:bg-orange-50 text-orange-700 border border-orange-200 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all"
+                                  >
+                                    Img 1 {settings.aboutImage1 ? '✓' : '+'}
+                                  </button>
+                                  {settings.aboutImage1 && (
+                                    <>
+                                      <button onClick={() => setSettings({...settings, aboutImage1: ''})} className="text-[8px] text-red-500 font-bold uppercase tracking-widest hover:underline">Remover</button>
+                                      <div className="space-y-2 pt-2 border-t border-stone-200">
+                                        <label className="text-[8px] font-black text-stone-400 uppercase tracking-widest">Tamanho Img 1</label>
+                                        <div className="flex flex-wrap gap-1 items-center">
+                                          <button
+                                            onClick={() => setSettings({...settings, aboutImage1Size: 'small'})}
+                                            className={`py-1.5 px-2 text-[8px] font-black uppercase rounded-lg transition-all ${
+                                              settings.aboutImage1Size === 'small' || !settings.aboutImage1Size
+                                                ? 'bg-orange-700 text-white'
+                                                : 'bg-white text-stone-600 hover:bg-orange-50'
+                                            }`}
+                                          >
+                                            Pequena
+                                          </button>
+                                          <button
+                                            onClick={() => setSettings({...settings, aboutImage1Size: 'medium'})}
+                                            className={`py-1.5 px-2 text-[8px] font-black uppercase rounded-lg transition-all ${
+                                              settings.aboutImage1Size === 'medium'
+                                                ? 'bg-orange-700 text-white'
+                                                : 'bg-white text-stone-600 hover:bg-orange-50'
+                                            }`}
+                                          >
+                                            Média
+                                          </button>
+                                          <button
+                                            onClick={() => setSettings({...settings, aboutImage1Size: 'large'})}
+                                            className={`py-1.5 px-2 text-[8px] font-black uppercase rounded-lg transition-all ${
+                                              settings.aboutImage1Size === 'large'
+                                                ? 'bg-orange-700 text-white'
+                                                : 'bg-white text-stone-600 hover:bg-orange-50'
+                                            }`}
+                                          >
+                                            Grande
+                                          </button>
+                                          <button
+                                            onClick={() => setSettings({...settings, aboutImage1Size: 'custom'})}
+                                            className={`py-1.5 px-2 text-[8px] font-black uppercase rounded-lg transition-all ${
+                                              settings.aboutImage1Size === 'custom'
+                                                ? 'bg-orange-700 text-white'
+                                                : 'bg-white text-stone-600 hover:bg-orange-50'
+                                            }`}
+                                          >
+                                            Personalizado
+                                          </button>
+                                          {settings.aboutImage1Size === 'custom' && (
+                                            <input
+                                              type="number"
+                                              min="100"
+                                              max="600"
+                                              value={settings.aboutImage1SizePx || 300}
+                                              onChange={(e) => setSettings({...settings, aboutImage1SizePx: parseInt(e.target.value) || 300})}
+                                              className="w-16 px-1.5 py-1.5 text-[10px] font-black text-stone-900 rounded-lg border border-stone-200 focus:outline-none focus:ring-2 focus:ring-orange-700"
+                                              placeholder="px"
+                                            />
+                                          )}
+                                        </div>
+                                      </div>
+                                    </>
+                                  )}
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                  <div className="w-full h-32 bg-white rounded-2xl border border-stone-200 flex items-center justify-center overflow-hidden p-2">
+                                    {settings.aboutImage2 ? (
+                                      <img src={settings.aboutImage2} className="w-full h-full object-contain object-center" alt="About Image 2" style={{ maxWidth: '100%', maxHeight: '100%' }} />
+                                    ) : (
+                                      <ImageIcon size={32} className="text-stone-200" />
+                                    )}
+                                  </div>
+                                  <button 
+                                    onClick={() => {
+                                      const input = document.createElement('input');
+                                      input.type = 'file';
+                                      input.accept = 'image/*';
+                                      input.onchange = (e) => {
+                                        const file = (e.target as HTMLInputElement).files?.[0];
+                                        if (file) {
+                                          handleFileUpload(file, (base) => {
+                                            const updatedSettings = {...settings, aboutImage2: base};
+                                            setSettings(updatedSettings);
+                                            // Force immediate save
+                                            try {
+                                              localStorage.setItem('minas_v2_settings', JSON.stringify(updatedSettings));
+                                            } catch (e) {
+                                              console.error('Error saving aboutImage2:', e);
+                                            }
+                                          });
+                                        }
+                                      };
+                                      input.click();
+                                    }}
+                                    className="w-full py-3 bg-white hover:bg-orange-50 text-orange-700 border border-orange-200 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all"
+                                  >
+                                    Img 2 {settings.aboutImage2 ? '✓' : '+'}
+                                  </button>
+                                  {settings.aboutImage2 && (
+                                    <>
+                                      <button onClick={() => setSettings({...settings, aboutImage2: ''})} className="text-[8px] text-red-500 font-bold uppercase tracking-widest hover:underline">Remover</button>
+                                      <div className="space-y-2 pt-2 border-t border-stone-200">
+                                        <label className="text-[8px] font-black text-stone-400 uppercase tracking-widest">Tamanho Img 2</label>
+                                        <div className="flex flex-wrap gap-1 items-center">
+                                          <button
+                                            onClick={() => setSettings({...settings, aboutImage2Size: 'small'})}
+                                            className={`py-1.5 px-2 text-[8px] font-black uppercase rounded-lg transition-all ${
+                                              settings.aboutImage2Size === 'small' || !settings.aboutImage2Size
+                                                ? 'bg-orange-700 text-white'
+                                                : 'bg-white text-stone-600 hover:bg-orange-50'
+                                            }`}
+                                          >
+                                            Pequena
+                                          </button>
+                                          <button
+                                            onClick={() => setSettings({...settings, aboutImage2Size: 'medium'})}
+                                            className={`py-1.5 px-2 text-[8px] font-black uppercase rounded-lg transition-all ${
+                                              settings.aboutImage2Size === 'medium'
+                                                ? 'bg-orange-700 text-white'
+                                                : 'bg-white text-stone-600 hover:bg-orange-50'
+                                            }`}
+                                          >
+                                            Média
+                                          </button>
+                                          <button
+                                            onClick={() => setSettings({...settings, aboutImage2Size: 'large'})}
+                                            className={`py-1.5 px-2 text-[8px] font-black uppercase rounded-lg transition-all ${
+                                              settings.aboutImage2Size === 'large'
+                                                ? 'bg-orange-700 text-white'
+                                                : 'bg-white text-stone-600 hover:bg-orange-50'
+                                            }`}
+                                          >
+                                            Grande
+                                          </button>
+                                          <button
+                                            onClick={() => setSettings({...settings, aboutImage2Size: 'custom'})}
+                                            className={`py-1.5 px-2 text-[8px] font-black uppercase rounded-lg transition-all ${
+                                              settings.aboutImage2Size === 'custom'
+                                                ? 'bg-orange-700 text-white'
+                                                : 'bg-white text-stone-600 hover:bg-orange-50'
+                                            }`}
+                                          >
+                                            Personalizado
+                                          </button>
+                                          {settings.aboutImage2Size === 'custom' && (
+                                            <input
+                                              type="number"
+                                              min="100"
+                                              max="600"
+                                              value={settings.aboutImage2SizePx || 300}
+                                              onChange={(e) => setSettings({...settings, aboutImage2SizePx: parseInt(e.target.value) || 300})}
+                                              className="w-16 px-1.5 py-1.5 text-[10px] font-black text-stone-900 rounded-lg border border-stone-200 focus:outline-none focus:ring-2 focus:ring-orange-700"
+                                              placeholder="px"
+                                            />
+                                          )}
+                                        </div>
+                                      </div>
+                                    </>
+                                  )}
+                                </div>
                               </div>
                               {(settings.aboutImage1 || settings.aboutImage2) && (
                                 <button onClick={() => setSettings({...settings, aboutImage1: '', aboutImage2: ''})} className="text-[9px] text-red-500 font-bold uppercase tracking-widest hover:underline text-center">Remover Ambas</button>
@@ -2159,16 +2654,31 @@ function App() {
                           <div className="space-y-3 sm:space-y-4">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                               <button 
-                                onClick={async () => {
-                                  alert('Sincronizando com a nuvem...');
+                                onClick={async (e) => {
+                                  const button = e.currentTarget;
+                                  const originalText = button.textContent;
+                                  button.textContent = '⏳ Sincronizando...';
+                                  button.disabled = true;
                                   const success = await syncToCloud();
                                   if (success) {
-                                    alert('✅ Dados sincronizados com sucesso!\n\nAgora todos os clientes verão suas alterações.');
+                                    button.textContent = '✅ Sincronizado com Sucesso!';
+                                    button.className = button.className.replace('bg-green-50', 'bg-green-100').replace('text-green-600', 'text-green-700');
+                                    setTimeout(() => {
+                                      button.textContent = originalText;
+                                      button.className = button.className.replace('bg-green-100', 'bg-green-50').replace('text-green-700', 'text-green-600');
+                                      button.disabled = false;
+                                    }, 3000);
                                   } else {
-                                    alert('❌ Erro ao sincronizar. Verifique sua conexão e tente novamente.');
+                                    button.textContent = '❌ Erro ao Sincronizar';
+                                    button.className = button.className.replace('bg-green-50', 'bg-red-50').replace('text-green-600', 'text-red-600');
+                                    setTimeout(() => {
+                                      button.textContent = originalText;
+                                      button.className = button.className.replace('bg-red-50', 'bg-green-50').replace('text-red-600', 'text-green-600');
+                                      button.disabled = false;
+                                    }, 3000);
                                   }
                                 }}
-                                className="px-4 sm:px-8 py-3 sm:py-5 bg-green-50 text-green-600 font-black uppercase tracking-widest rounded-xl sm:rounded-[1.5rem] hover:bg-green-100 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs sm:text-sm border-2 border-green-200"
+                                className="px-4 sm:px-8 py-3 sm:py-5 bg-green-50 text-green-600 font-black uppercase tracking-widest rounded-xl sm:rounded-[1.5rem] hover:bg-green-100 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs sm:text-sm border-2 border-green-200 disabled:opacity-50 disabled:cursor-not-allowed"
                               >
                                 <Save size={14} className="sm:w-4 sm:h-4" /> ☁️ Sincronizar com Nuvem (Salvar)
                               </button>

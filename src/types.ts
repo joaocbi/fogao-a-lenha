@@ -21,7 +21,11 @@ export interface RestaurantSettings {
   heroVideo?: string;
   heroImage?: string;
   aboutImage1?: string;
+  aboutImage1Size?: 'small' | 'medium' | 'large' | 'custom';
+  aboutImage1SizePx?: number;
   aboutImage2?: string;
+  aboutImage2Size?: 'small' | 'medium' | 'large' | 'custom';
+  aboutImage2SizePx?: number;
   phone: string;
   whatsapp: string;
   address: string;
