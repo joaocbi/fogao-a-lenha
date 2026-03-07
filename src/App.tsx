@@ -1142,43 +1142,39 @@ function App() {
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md shadow-sm border-b border-orange-100">
         <div className="container mx-auto px-3 sm:px-6 md:px-8 h-14 sm:h-20 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1 overflow-hidden">
-            {/* Logo - hidden on mobile, visible on sm and up */}
-            <div className="hidden sm:block">
-              {settings.logo ? (
-                (() => {
-                  // Get logo size classes
-                  const getLogoSizeClasses = () => {
-                    if (settings.logoSize === 'custom' && settings.logoSizePx) {
-                      return '';
-                    }
-                    const sizeMap: Record<string, string> = {
-                      small: 'w-8 h-8 sm:w-12 sm:h-12',
-                      medium: 'w-10 h-10 sm:w-16 sm:h-16',
-                      large: 'w-12 h-12 sm:w-20 sm:h-20',
-                    };
-                    return sizeMap[settings.logoSize || 'medium'] || sizeMap.medium;
+            {settings.logo ? (
+              (() => {
+                // Get logo size classes
+                const getLogoSizeClasses = () => {
+                  if (settings.logoSize === 'custom' && settings.logoSizePx) {
+                    return '';
+                  }
+                  const sizeMap: Record<string, string> = {
+                    small: 'w-8 h-8 sm:w-12 sm:h-12',
+                    medium: 'w-10 h-10 sm:w-16 sm:h-16',
+                    large: 'w-12 h-12 sm:w-20 sm:h-20',
                   };
-                  const sizeClasses = getLogoSizeClasses();
-                  const customStyle = settings.logoSize === 'custom' && settings.logoSizePx
-                    ? { width: `${settings.logoSizePx}px`, height: `${settings.logoSizePx}px` }
-                    : {};
-                  return (
-                    <img 
-                      src={settings.logo} 
-                      alt={settings.name || 'Logo'} 
-                      className={`${sizeClasses} object-contain rounded-lg sm:rounded-xl flex-shrink-0`}
-                      style={customStyle}
-                    />
-                  );
-                })()
-              ) : (
-                <div className="w-10 h-10 sm:w-16 sm:h-16 bg-orange-700 rounded-xl sm:rounded-2xl flex items-center justify-center text-white font-black text-sm sm:text-2xl shadow-lg shadow-orange-700/20 rotate-3 flex-shrink-0">
-                  {(settings.name || 'Fogão & Sabor').split(' ').filter(Boolean).map(n => n[0] || '').join('').slice(0, 2).toUpperCase()}
-                </div>
-              )}
-            </div>
-            {/* Text - centered on mobile, left-aligned on desktop */}
-            <div className="flex flex-col justify-center min-w-0 flex-1 overflow-hidden pr-1 sm:pr-2 text-center sm:text-left">
+                  return sizeMap[settings.logoSize || 'medium'] || sizeMap.medium;
+                };
+                const sizeClasses = getLogoSizeClasses();
+                const customStyle = settings.logoSize === 'custom' && settings.logoSizePx
+                  ? { width: `${settings.logoSizePx}px`, height: `${settings.logoSizePx}px` }
+                  : {};
+                return (
+                  <img 
+                    src={settings.logo} 
+                    alt={settings.name || 'Logo'} 
+                    className={`${sizeClasses} object-contain rounded-lg sm:rounded-xl flex-shrink-0`}
+                    style={customStyle}
+                  />
+                );
+              })()
+            ) : (
+              <div className="w-10 h-10 sm:w-16 sm:h-16 bg-orange-700 rounded-xl sm:rounded-2xl flex items-center justify-center text-white font-black text-sm sm:text-2xl shadow-lg shadow-orange-700/20 rotate-3 flex-shrink-0">
+                {(settings.name || 'Fogão & Sabor').split(' ').filter(Boolean).map(n => n[0] || '').join('').slice(0, 2).toUpperCase()}
+              </div>
+            )}
+            <div className="flex flex-col justify-center min-w-0 flex-1 overflow-hidden pr-1 sm:pr-2">
               <h1 className="text-[11px] sm:text-lg md:text-2xl font-black text-orange-900 leading-tight sm:leading-none tracking-tight mb-0.5 sm:mb-1">{settings.name || 'Fogão & Sabor'}</h1>
               <p className="text-[8px] sm:text-[11px] text-green-700 font-bold tracking-[0.1em] sm:tracking-[0.2em] uppercase">Comida Caseira</p>
             </div>
