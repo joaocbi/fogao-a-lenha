@@ -439,27 +439,56 @@ function App() {
           let mergedSettings = cloudData.settings;
           
           if (preserveLocalImages) {
-            // Preserve local images in items
+            // Preserve local images in items - but only if local image exists
+            // If local image is empty, it means it was never set or was cleared
+            mergedItems = cloudData.items.map((cloudItem: MenuItem) => {
+              const localItem = items.find(item => item.id === cloudItem.id);
+              // Keep local image only if it exists and is not empty
+              // This allows new items from cloud to work, but preserves existing local images
+              return {
+                ...cloudItem,
+                image: (localItem?.image && localItem.image.trim() !== '') ? localItem.image : (cloudItem.image || '')
+              };
+            });
+            
+            // Preserve local images in settings - but only if local image exists
+            mergedSettings = {
+              ...cloudData.settings,
+              // Only preserve local images if they exist and are not empty
+              logo: (settings.logo && settings.logo.trim() !== '') ? settings.logo : (cloudData.settings.logo || ''),
+              logoSize: cloudData.settings.logoSize || settings.logoSize,
+              logoSizePx: cloudData.settings.logoSizePx || settings.logoSizePx,
+              heroVideo: (settings.heroVideo && settings.heroVideo.trim() !== '') ? settings.heroVideo : (cloudData.settings.heroVideo || ''),
+              heroImage: (settings.heroImage && settings.heroImage.trim() !== '') ? settings.heroImage : (cloudData.settings.heroImage || ''),
+              aboutImage1: (settings.aboutImage1 && settings.aboutImage1.trim() !== '') ? settings.aboutImage1 : (cloudData.settings.aboutImage1 || ''),
+              aboutImage1Size: cloudData.settings.aboutImage1Size || settings.aboutImage1Size,
+              aboutImage1SizePx: cloudData.settings.aboutImage1SizePx || settings.aboutImage1SizePx,
+              aboutImage2: (settings.aboutImage2 && settings.aboutImage2.trim() !== '') ? settings.aboutImage2 : (cloudData.settings.aboutImage2 || ''),
+              aboutImage2Size: cloudData.settings.aboutImage2Size || settings.aboutImage2Size,
+              aboutImage2SizePx: cloudData.settings.aboutImage2SizePx || settings.aboutImage2SizePx
+            };
+          } else {
+            // If not preserving, use cloud data as-is (but cloud data has no images, so they'll be empty)
+            // In this case, we should keep local images if they exist
             mergedItems = cloudData.items.map((cloudItem: MenuItem) => {
               const localItem = items.find(item => item.id === cloudItem.id);
               return {
                 ...cloudItem,
-                image: localItem?.image || cloudItem.image || '' // Keep local image if exists
+                image: localItem?.image || '' // Keep local image if exists, otherwise empty
               };
             });
             
-            // Preserve local images in settings
             mergedSettings = {
               ...cloudData.settings,
-              logo: settings.logo || cloudData.settings.logo || '',
+              logo: settings.logo || '',
               logoSize: cloudData.settings.logoSize || settings.logoSize,
               logoSizePx: cloudData.settings.logoSizePx || settings.logoSizePx,
-              heroVideo: settings.heroVideo || cloudData.settings.heroVideo || '',
-              heroImage: settings.heroImage || cloudData.settings.heroImage || '',
-              aboutImage1: settings.aboutImage1 || cloudData.settings.aboutImage1 || '',
+              heroVideo: settings.heroVideo || '',
+              heroImage: settings.heroImage || '',
+              aboutImage1: settings.aboutImage1 || '',
               aboutImage1Size: cloudData.settings.aboutImage1Size || settings.aboutImage1Size,
               aboutImage1SizePx: cloudData.settings.aboutImage1SizePx || settings.aboutImage1SizePx,
-              aboutImage2: settings.aboutImage2 || cloudData.settings.aboutImage2 || '',
+              aboutImage2: settings.aboutImage2 || '',
               aboutImage2Size: cloudData.settings.aboutImage2Size || settings.aboutImage2Size,
               aboutImage2SizePx: cloudData.settings.aboutImage2SizePx || settings.aboutImage2SizePx
             };
@@ -809,6 +838,41 @@ function App() {
   const filteredItems = activeCategory === 'all' 
     ? items 
     : items.filter(i => i.category === activeCategory);
+
+  // Export all data WITH images for mobile sync (full data including images)
+  const exportDataWithImages = () => {
+    try {
+      const exportData = {
+        categories: categories,
+        items: items, // Include images
+        settings: settings, // Include all images
+        orders: [], // Don't export orders
+        exportDate: new Date().toISOString(),
+        version: '2.0',
+        optimized: false, // This export includes images
+        hasImages: true
+      };
+      
+      const dataStr = JSON.stringify(exportData);
+      const sizeInKB = new Blob([dataStr]).size / 1024;
+      const sizeInMB = sizeInKB / 1024;
+      
+      if (sizeInMB > 4) {
+        alert(`⚠️ ATENÇÃO: O arquivo é muito grande (${sizeInMB.toFixed(2)}MB).\n\nPara enviar via WhatsApp, use "Copiar para Celular (Otimizado)" que remove as imagens.\n\nEste export completo é para backup ou sincronização manual.`);
+      }
+      
+      // Copy to clipboard
+      navigator.clipboard.writeText(dataStr).then(() => {
+        alert(`✅ Dados completos (COM imagens) copiados para área de transferência!\n\nTamanho: ${sizeInKB.toFixed(2)}KB (${sizeInMB.toFixed(2)}MB)\n\nCole no celular usando "Colar JSON (Texto Único)" ou "Colar JSON em Partes".`);
+      }).catch(() => {
+        // Fallback: show in prompt
+        prompt('Copie este JSON completo (COM imagens):', dataStr);
+      });
+    } catch (error) {
+      console.error('Error exporting data with images:', error);
+      alert('Erro ao exportar dados com imagens.');
+    }
+  };
 
   // Export all data to JSON file (full backup)
   const exportData = () => {
@@ -3093,10 +3157,16 @@ function App() {
                               </button>
                             </div>
                             <button 
+                              onClick={exportDataWithImages}
+                              className="w-full px-4 sm:px-8 py-3 sm:py-5 bg-green-50 text-green-600 font-black uppercase tracking-widest rounded-xl sm:rounded-[1.5rem] hover:bg-green-100 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs sm:text-sm border-2 border-green-200"
+                            >
+                              <MessageCircle size={14} className="sm:w-4 sm:h-4" /> 📸 Copiar Completo (COM Imagens)
+                            </button>
+                            <button 
                               onClick={exportDataForSync}
                               className="w-full px-4 sm:px-8 py-3 sm:py-5 bg-orange-50 text-orange-600 font-black uppercase tracking-widest rounded-xl sm:rounded-[1.5rem] hover:bg-orange-100 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs sm:text-sm border-2 border-orange-200"
                             >
-                              <MessageCircle size={14} className="sm:w-4 sm:h-4" /> 📱 Copiar para Celular (Otimizado)
+                              <MessageCircle size={14} className="sm:w-4 sm:h-4" /> 📱 Copiar para Celular (Sem Imagens)
                             </button>
                             <button 
                               onClick={importFromPaste}
@@ -3111,7 +3181,7 @@ function App() {
                               <MessageCircle size={14} className="sm:w-4 sm:h-4" /> 📱 Colar JSON em Partes (WhatsApp)
                             </button>
                             <p className="text-[10px] sm:text-xs text-stone-400 text-center px-2">
-                              💡 <strong>Para WhatsApp:</strong> Use "Copiar para Celular" no PC (divide automaticamente), depois "Colar JSON em Partes" no celular. Todas as imagens são removidas para reduzir tamanho.
+                              💡 <strong>Para sincronizar imagens:</strong> Use "Copiar Completo (COM Imagens)" no PC, depois "Colar JSON" no celular. Para WhatsApp (sem imagens), use "Copiar para Celular (Sem Imagens)" que divide automaticamente.
                             </p>
                           </div>
                         </div>
