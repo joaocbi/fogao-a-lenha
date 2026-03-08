@@ -335,11 +335,14 @@ function App() {
       // logo, heroImage, heroVideo, aboutImage1, aboutImage2 removed
     };
 
+    // Limit orders to last 100 to prevent payload from being too large
+    const limitedOrders = (orders || []).slice(-100);
+
     return {
       categories,
       items: optimizedItems,
       settings: optimizedSettings,
-      orders: orders || [],
+      orders: limitedOrders,
     };
   };
 
@@ -347,6 +350,23 @@ function App() {
     try {
       // Optimize data by removing images before syncing (reduces payload size)
       const optimizedData = optimizeDataForSync();
+      
+      // Calculate payload size
+      const payloadString = JSON.stringify(optimizedData);
+      const payloadSizeKB = new Blob([payloadString]).size / 1024;
+      const payloadSizeMB = payloadSizeKB / 1024;
+      
+      console.log(`📦 Sync payload size: ${payloadSizeKB.toFixed(2)}KB (${payloadSizeMB.toFixed(2)}MB)`);
+      
+      // Vercel has a 4.5MB limit for serverless functions
+      // If still too large, limit orders to last 100
+      if (payloadSizeMB > 3.5) {
+        console.warn('⚠️ Payload still large, limiting orders to last 100');
+        optimizedData.orders = (optimizedData.orders || []).slice(-100);
+        const newPayloadString = JSON.stringify(optimizedData);
+        const newPayloadSizeKB = new Blob([newPayloadString]).size / 1024;
+        console.log(`📦 Optimized payload size: ${newPayloadSizeKB.toFixed(2)}KB`);
+      }
       
       const response = await fetch(getApiUrl(), {
         method: 'POST',
@@ -359,6 +379,13 @@ function App() {
       // Check if response is ok before parsing JSON
       if (!response.ok) {
         const errorText = await response.text();
+        console.error(`❌ HTTP ${response.status} Error:`, errorText.substring(0, 200));
+        
+        if (response.status === 413) {
+          console.error('❌ Payload too large! Current size:', payloadSizeMB.toFixed(2), 'MB');
+          throw new Error(`Payload muito grande (${payloadSizeMB.toFixed(2)}MB). Limite do Vercel: 4.5MB. Tente limpar pedidos antigos.`);
+        }
+        
         throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 100)}`);
       }
 
