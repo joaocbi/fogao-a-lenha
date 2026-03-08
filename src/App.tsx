@@ -303,20 +303,54 @@ function App() {
     return `${window.location.origin}/api/data`;
   };
 
-  // Optimize data for cloud sync by removing images (to reduce payload size)
-  const optimizeDataForSync = () => {
-    // Remove ALL images from items (keep only text data)
-    const optimizedItems = items.map(item => ({
-      id: item.id,
-      name: item.name,
-      description: item.description,
-      price: item.price,
-      category: item.category,
-      available: item.available
-      // image removed completely
-    }));
+  // Compress image to very small size for cloud sync (ultra compression)
+  const compressImageForSync = async (base64Image: string, maxWidth: number = 400, quality: number = 0.4): Promise<string> => {
+    if (!base64Image || base64Image.trim() === '') return '';
+    
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        
+        if (width > maxWidth) {
+          height = (height * maxWidth) / width;
+          width = maxWidth;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressed = canvas.toDataURL('image/jpeg', quality);
+          resolve(compressed);
+        } else {
+          resolve(base64Image); // Fallback to original if compression fails
+        }
+      };
+      img.onerror = () => resolve(base64Image); // Fallback to original if load fails
+      img.src = base64Image;
+    });
+  };
 
-    // Remove ALL media from settings (keep only text/config)
+  // Optimize data for cloud sync with compressed images (to reduce payload size but keep images)
+  const optimizeDataForSync = async () => {
+    // Compress images in items (ultra compression for sync)
+    const optimizedItems = await Promise.all(
+      items.map(async (item) => ({
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        category: item.category,
+        available: item.available,
+        image: item.image ? await compressImageForSync(item.image, 400, 0.4) : '' // Ultra compressed
+      }))
+    );
+
+    // Compress images in settings (ultra compression for sync)
     const optimizedSettings = {
       name: settings.name,
       phone: settings.phone,
@@ -332,7 +366,12 @@ function App() {
       aboutImage1SizePx: settings.aboutImage1SizePx,
       aboutImage2Size: settings.aboutImage2Size,
       aboutImage2SizePx: settings.aboutImage2SizePx,
-      // logo, heroImage, heroVideo, aboutImage1, aboutImage2 removed
+      // Compress media images for sync
+      logo: settings.logo ? await compressImageForSync(settings.logo, 200, 0.4) : '',
+      heroImage: settings.heroImage ? await compressImageForSync(settings.heroImage, 800, 0.4) : '',
+      heroVideo: settings.heroVideo || '', // Videos are not compressed
+      aboutImage1: settings.aboutImage1 ? await compressImageForSync(settings.aboutImage1, 600, 0.4) : '',
+      aboutImage2: settings.aboutImage2 ? await compressImageForSync(settings.aboutImage2, 600, 0.4) : ''
     };
 
     // Limit orders to last 100 to prevent payload from being too large
@@ -348,8 +387,8 @@ function App() {
 
   const syncToCloud = async () => {
     try {
-      // Optimize data by removing images before syncing (reduces payload size)
-      const optimizedData = optimizeDataForSync();
+      // Optimize data with compressed images for syncing (reduces payload size but keeps images)
+      const optimizedData = await optimizeDataForSync();
       
       // Calculate payload size
       const payloadString = JSON.stringify(optimizedData);
@@ -357,6 +396,7 @@ function App() {
       const payloadSizeMB = payloadSizeKB / 1024;
       
       console.log(`📦 Sync payload size: ${payloadSizeKB.toFixed(2)}KB (${payloadSizeMB.toFixed(2)}MB)`);
+      console.log(`📸 Images are compressed for sync (400px max, 40% quality)`);
       
       // Vercel has a 4.5MB limit for serverless functions
       // If still too large, limit orders to last 100
