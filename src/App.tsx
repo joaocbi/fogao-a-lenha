@@ -176,7 +176,7 @@ function App() {
   
   // Admin authentication - only you have access
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
-  const ADMIN_PASSWORD = 'admin2026'; // Change this to your desired password
+  const ADMIN_PASSWORD = 'admin2026@#'; // Change this to your desired password
   
   useEffect(() => {
     // Check if admin is already authenticated (password stored in localStorage)
@@ -303,20 +303,64 @@ function App() {
     return `${window.location.origin}/api/data`;
   };
 
+  // Optimize data for cloud sync by removing images (to reduce payload size)
+  const optimizeDataForSync = () => {
+    // Remove ALL images from items (keep only text data)
+    const optimizedItems = items.map(item => ({
+      id: item.id,
+      name: item.name,
+      description: item.description,
+      price: item.price,
+      category: item.category,
+      available: item.available
+      // image removed completely
+    }));
+
+    // Remove ALL media from settings (keep only text/config)
+    const optimizedSettings = {
+      name: settings.name,
+      phone: settings.phone,
+      whatsapp: settings.whatsapp,
+      address: settings.address,
+      openingHours: settings.openingHours,
+      deliveryFee: settings.deliveryFee,
+      minOrder: settings.minOrder,
+      paymentMethods: settings.paymentMethods,
+      logoSize: settings.logoSize,
+      logoSizePx: settings.logoSizePx,
+      aboutImage1Size: settings.aboutImage1Size,
+      aboutImage1SizePx: settings.aboutImage1SizePx,
+      aboutImage2Size: settings.aboutImage2Size,
+      aboutImage2SizePx: settings.aboutImage2SizePx,
+      // logo, heroImage, heroVideo, aboutImage1, aboutImage2 removed
+    };
+
+    return {
+      categories,
+      items: optimizedItems,
+      settings: optimizedSettings,
+      orders: orders || [],
+    };
+  };
+
   const syncToCloud = async () => {
     try {
+      // Optimize data by removing images before syncing (reduces payload size)
+      const optimizedData = optimizeDataForSync();
+      
       const response = await fetch(getApiUrl(), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          categories,
-          items,
-          settings,
-          orders,
-        }),
+        body: JSON.stringify(optimizedData),
       });
+
+      // Check if response is ok before parsing JSON
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 100)}`);
+      }
 
       const result = await response.json();
       if (result.success) {
