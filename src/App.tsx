@@ -3,7 +3,7 @@ import {
   ShoppingCart, 
   Settings, 
   Menu as MenuIcon, 
-  X,
+  X, 
   RefreshCw,
   Phone, 
   MapPin, 
@@ -291,7 +291,7 @@ function App() {
 
   // Persistence effects
   useEffect(() => {
-    document.title = settings.name || 'Fogão & Sabor';
+    document.title = settings.name || 'Fogão a Lenha';
   }, [settings.name]);
 
   // Sync functions
@@ -1451,11 +1451,11 @@ function App() {
               })()
             ) : (
               <div className="w-10 h-10 sm:w-16 sm:h-16 bg-orange-700 rounded-xl sm:rounded-2xl flex items-center justify-center text-white font-black text-sm sm:text-2xl shadow-lg shadow-orange-700/20 rotate-3 flex-shrink-0">
-                {(settings.name || 'Fogão & Sabor').split(' ').filter(Boolean).map(n => n[0] || '').join('').slice(0, 2).toUpperCase()}
+                {(settings.name || 'Fogão a Lenha').split(' ').filter(Boolean).map(n => n[0] || '').join('').slice(0, 2).toUpperCase()}
               </div>
             )}
             <div className="flex flex-col justify-center min-w-0 flex-1 overflow-hidden pr-1 sm:pr-2">
-              <h1 className="text-[11px] sm:text-lg md:text-2xl font-black text-orange-900 leading-tight sm:leading-none tracking-tight mb-0.5 sm:mb-1">{settings.name || 'Fogão & Sabor'}</h1>
+              <h1 className="text-[11px] sm:text-lg md:text-2xl font-black text-orange-900 leading-tight sm:leading-none tracking-tight mb-0.5 sm:mb-1">{settings.name || 'Fogão a Lenha'}</h1>
               <p className="text-[8px] sm:text-[11px] text-green-700 font-bold tracking-[0.1em] sm:tracking-[0.2em] uppercase">Comida Caseira</p>
             </div>
           </div>
@@ -1469,16 +1469,16 @@ function App() {
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             {/* Admin button - only visible on desktop/PC and when authenticated */}
             {isDesktop && isAdminAuthenticated && (
-              <button 
-                onClick={() => setIsAdminOpen(true)}
+            <button 
+              onClick={() => setIsAdminOpen(true)}
                 onTouchStart={(e) => e.stopPropagation()}
                 className="group flex items-center gap-1 sm:gap-2 p-2 sm:p-3 text-stone-400 hover:text-orange-700 hover:bg-orange-50 rounded-xl sm:rounded-2xl transition-all border border-transparent hover:border-orange-100 active:scale-95"
-                title="Painel de Controle (Admin)"
+              title="Painel de Controle (Admin)"
                 style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-              >
+            >
                 <Settings size={18} className="sm:w-[22px] sm:h-[22px] group-hover:rotate-90 transition-transform duration-500" />
-                <span className="hidden lg:block text-[10px] font-black uppercase tracking-widest">Painel Admin</span>
-              </button>
+              <span className="hidden lg:block text-[10px] font-black uppercase tracking-widest">Painel Admin</span>
+            </button>
             )}
             {/* Admin login button - only visible on desktop/PC when not authenticated */}
             {isDesktop && !isAdminAuthenticated && (
@@ -1735,7 +1735,7 @@ function App() {
             <span className="text-orange-400 font-black tracking-[0.3em] uppercase text-[10px] sm:text-xs mb-4 sm:mb-6 block">Tradição & Família</span>
             <h3 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-black text-white mb-6 sm:mb-8 tracking-tighter leading-[0.9]">Sabor e dedicação em cada detalhe</h3>
             <p className="text-stone-400 text-base sm:text-lg md:text-xl leading-relaxed mb-8 sm:mb-10 md:mb-12 font-medium">
-              O restaurante Fogão & Sabor nasceu do desejo de trazer os sabores autênticos da comida caseira.
+              O restaurante Fogão a Lenha nasceu do desejo de trazer os sabores autênticos da comida caseira.
             </p>
             <div className="grid grid-cols-2 gap-4 sm:gap-6 md:gap-10">
               <div className="p-4 sm:p-6 md:p-8 bg-white/5 rounded-xl sm:rounded-2xl border border-white/10">
@@ -1858,7 +1858,7 @@ function App() {
       {/* Footer */}
       <footer className="bg-orange-50 py-12 sm:py-16 md:py-24 border-t border-orange-100">
         <div className="container mx-auto px-3 sm:px-4 text-center">
-          <h2 className="text-2xl sm:text-3xl font-black text-stone-900 mb-3 sm:mb-4 tracking-tighter">{settings.name || 'Fogão & Sabor'}</h2>
+          <h2 className="text-2xl sm:text-3xl font-black text-stone-900 mb-3 sm:mb-4 tracking-tighter">{settings.name || 'Fogão a Lenha'}</h2>
           <p className="text-stone-500 font-medium max-w-lg mx-auto mb-8 sm:mb-12 leading-relaxed text-sm sm:text-base">O melhor da culinária mineira direto para sua mesa, com o tempero que você só encontra no interior.</p>
           <div className="flex justify-center gap-6 sm:gap-8 md:gap-10 mb-12 sm:mb-16 flex-wrap">
             <a href="#" className="text-stone-400 hover:text-orange-700 font-black uppercase text-xs tracking-[0.2em] transition-colors">Instagram</a>
@@ -1866,7 +1866,7 @@ function App() {
             <a href="#" className="text-stone-400 hover:text-orange-700 font-black uppercase text-xs tracking-[0.2em] transition-colors">Twitter</a>
           </div>
           <div className="pt-12 border-t border-orange-200/50">
-            <p className="text-stone-400 text-xs font-bold uppercase tracking-widest">© 2026 {settings.name || 'Fogão & Sabor'}. Feito com paixão mineira.</p>
+            <p className="text-stone-400 text-xs font-bold uppercase tracking-widest">© 2026 {settings.name || 'Fogão a Lenha'}. Feito com paixão mineira.</p>
           </div>
         </div>
       </footer>
@@ -2202,7 +2202,7 @@ function App() {
                                     <Tag size={14} className="flex-shrink-0" />
                                     <span className="truncate text-xs">
                                       {categories.find(c => c.id === item.category)?.name || 'Sem categoria'}
-                                    </span>
+                                </span>
                                     <ChevronDown size={14} className={`flex-shrink-0 transition-transform ${openCategoryDropdown === item.id ? 'rotate-180' : ''}`} />
                                   </button>
                                   {openCategoryDropdown === item.id && (
@@ -2431,7 +2431,7 @@ function App() {
                           return (
                           <div key={cat.id} className="p-8 bg-white border border-stone-100 rounded-[2.5rem] flex items-center justify-between shadow-sm group hover:border-orange-200 transition-colors">
                             <div className="flex flex-col">
-                              <span className="font-black text-lg text-stone-900 tracking-tight">{cat.name}</span>
+                            <span className="font-black text-lg text-stone-900 tracking-tight">{cat.name}</span>
                               <span className="text-xs text-stone-400 font-bold uppercase tracking-widest mt-1">
                                 {itemsInCategory} {itemsInCategory === 1 ? 'item' : 'itens'}
                               </span>
@@ -2676,12 +2676,12 @@ function App() {
                                         )}
                                       </div>
                                     </div>
-                                    <button 
-                                      onClick={() => setSettings({...settings, logo: ''})}
-                                      className="w-full py-3 text-red-500 hover:bg-red-50 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all"
-                                    >
-                                      Remover
-                                    </button>
+                                  <button 
+                                    onClick={() => setSettings({...settings, logo: ''})}
+                                    className="w-full py-3 text-red-500 hover:bg-red-50 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all"
+                                  >
+                                    Remover
+                                  </button>
                                   </>
                                 )}
                               </div>
@@ -2826,13 +2826,13 @@ function App() {
                                       <ImageIcon size={32} className="text-stone-200" />
                                     )}
                                   </div>
-                                  <button 
-                                    onClick={() => {
-                                      const input = document.createElement('input');
-                                      input.type = 'file';
-                                      input.accept = 'image/*';
-                                      input.onchange = (e) => {
-                                        const file = (e.target as HTMLInputElement).files?.[0];
+                                <button 
+                                  onClick={() => {
+                                    const input = document.createElement('input');
+                                    input.type = 'file';
+                                    input.accept = 'image/*';
+                                    input.onchange = (e) => {
+                                      const file = (e.target as HTMLInputElement).files?.[0];
                                         if (file) {
                                           handleFileUpload(file, (base) => {
                                             const updatedSettings = {...settings, aboutImage1: base};
@@ -2845,13 +2845,13 @@ function App() {
                                             }
                                           });
                                         }
-                                      };
-                                      input.click();
-                                    }}
+                                    };
+                                    input.click();
+                                  }}
                                     className="w-full py-3 bg-white hover:bg-orange-50 text-orange-700 border border-orange-200 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all"
-                                  >
-                                    Img 1 {settings.aboutImage1 ? '✓' : '+'}
-                                  </button>
+                                >
+                                  Img 1 {settings.aboutImage1 ? '✓' : '+'}
+                                </button>
                                   {settings.aboutImage1 && (
                                     <>
                                       <button onClick={() => setSettings({...settings, aboutImage1: ''})} className="text-[8px] text-red-500 font-bold uppercase tracking-widest hover:underline">Remover</button>
@@ -2922,13 +2922,13 @@ function App() {
                                       <ImageIcon size={32} className="text-stone-200" />
                                     )}
                                   </div>
-                                  <button 
-                                    onClick={() => {
-                                      const input = document.createElement('input');
-                                      input.type = 'file';
-                                      input.accept = 'image/*';
-                                      input.onchange = (e) => {
-                                        const file = (e.target as HTMLInputElement).files?.[0];
+                                <button 
+                                  onClick={() => {
+                                    const input = document.createElement('input');
+                                    input.type = 'file';
+                                    input.accept = 'image/*';
+                                    input.onchange = (e) => {
+                                      const file = (e.target as HTMLInputElement).files?.[0];
                                         if (file) {
                                           handleFileUpload(file, (base) => {
                                             const updatedSettings = {...settings, aboutImage2: base};
@@ -2941,13 +2941,13 @@ function App() {
                                             }
                                           });
                                         }
-                                      };
-                                      input.click();
-                                    }}
+                                    };
+                                    input.click();
+                                  }}
                                     className="w-full py-3 bg-white hover:bg-orange-50 text-orange-700 border border-orange-200 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all"
-                                  >
-                                    Img 2 {settings.aboutImage2 ? '✓' : '+'}
-                                  </button>
+                                >
+                                  Img 2 {settings.aboutImage2 ? '✓' : '+'}
+                                </button>
                                   {settings.aboutImage2 && (
                                     <>
                                       <button onClick={() => setSettings({...settings, aboutImage2: ''})} className="text-[8px] text-red-500 font-bold uppercase tracking-widest hover:underline">Remover</button>
