@@ -178,6 +178,20 @@ function App() {
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const ADMIN_PASSWORD = 'admin2026@#'; // Change this to your desired password
   
+  // Auto-update restaurant name if it's the old one
+  useEffect(() => {
+    if (settings.name === 'Fogão & Sabor' || settings.name === 'Fogao & Sabor') {
+      const updatedSettings = { ...settings, name: 'Fogão a Lenha' };
+      setSettings(updatedSettings);
+      try {
+        localStorage.setItem('minas_v2_settings', JSON.stringify(updatedSettings));
+        console.log('✅ Restaurant name updated from "Fogão & Sabor" to "Fogão a Lenha"');
+      } catch (e) {
+        console.error('Error updating restaurant name:', e);
+      }
+    }
+  }, [settings.name]);
+  
   useEffect(() => {
     // Check if admin is already authenticated (password stored in localStorage)
     const storedAuth = localStorage.getItem('minas_admin_authenticated');
@@ -531,6 +545,12 @@ function App() {
               aboutImage2Size: cloudData.settings.aboutImage2Size || settings.aboutImage2Size,
               aboutImage2SizePx: cloudData.settings.aboutImage2SizePx || settings.aboutImage2SizePx
             };
+          }
+          
+          // Auto-update restaurant name if it's the old one
+          if (mergedSettings.name === 'Fogão & Sabor' || mergedSettings.name === 'Fogao & Sabor') {
+            mergedSettings.name = 'Fogão a Lenha';
+            console.log('✅ Restaurant name updated from cloud data: "Fogão & Sabor" → "Fogão a Lenha"');
           }
           
           setCategories(cloudData.categories);
