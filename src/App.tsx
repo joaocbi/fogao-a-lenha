@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
   ShoppingCart, 
   Settings, 
@@ -582,6 +582,12 @@ function App() {
     }
   }, []);
 
+  // Ref to track admin state for the checkCloudUpdates interval
+  const isAdminOpenRef = useRef(isAdminOpen);
+  useEffect(() => {
+    isAdminOpenRef.current = isAdminOpen;
+  }, [isAdminOpen]);
+
   // Load from cloud on mount - preserve local images
   useEffect(() => {
     let lastCloudUpdate: string | null = null;
@@ -598,6 +604,12 @@ function App() {
             lastCloudUpdate = result.lastUpdated;
             
             if (wasNew) {
+              // Don't auto-update if admin panel is open to prevent overwriting local edits
+              if (isAdminOpenRef.current) {
+                console.log('🔄 New data detected in cloud, but admin panel is open. Skipping auto-update to prevent overwriting edits.');
+                return;
+              }
+              
               console.log('🔄 New data detected in cloud, updating...');
               await loadFromCloud(true);
               // Show a subtle notification that data was updated
