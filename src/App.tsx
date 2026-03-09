@@ -1546,7 +1546,7 @@ function App() {
             animate={{ opacity: 1, y: 0 }}
             className="inline-block px-3 py-1 sm:px-4 sm:py-1.5 bg-orange-700 text-white text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] rounded-full mb-4 sm:mb-6 shadow-xl"
           >
-            Bem-vindo ao Interior
+            Bem-vindo!
           </motion.span>
           <motion.h2 
             initial={{ opacity: 0, y: 20 }}
@@ -1562,7 +1562,7 @@ function App() {
             transition={{ delay: 0.2 }}
             className="text-sm sm:text-lg md:text-xl lg:text-2xl mb-8 sm:mb-10 md:mb-12 font-medium text-stone-200 max-w-2xl mx-auto leading-relaxed px-2"
           >
-            Pratos preparados com ingredientes frescos e muito amor.
+            Pedidos pelo site em Adicionar ou pelo WhatssApp clicando no botão abaixo.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
