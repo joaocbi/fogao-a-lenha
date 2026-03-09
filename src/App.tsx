@@ -1683,7 +1683,7 @@ function App() {
                 </div>
                 <div className="p-4 sm:p-6 md:p-8 flex flex-col flex-1">
                   <h4 className="text-lg sm:text-xl md:text-2xl font-black text-stone-900 mb-2 sm:mb-3 group-hover:text-orange-700 transition-colors">{item.name}</h4>
-                  <p className="text-stone-500 text-xs sm:text-sm mb-4 sm:mb-6 md:mb-8 leading-relaxed line-clamp-3">{item.description}</p>
+                  <p className="text-stone-500 text-xs sm:text-sm mb-4 sm:mb-6 md:mb-8 leading-relaxed line-clamp-4">{item.description}</p>
                   <button 
                     type="button"
                     onClick={(e) => {
