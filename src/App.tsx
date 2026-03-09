@@ -855,7 +855,7 @@ function App() {
       `*TOTAL:* R$ ${(cartTotal + settings.deliveryFee).toFixed(2)}\n\n` +
       `_Pedido realizado via Site_`;
 
-    const whatsappUrl = `https://wa.me/${settings.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+    const whatsappUrl = `https://wa.me/55${settings.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
 
     // Clear cart and close modals
     setCart([]);
@@ -1862,7 +1862,7 @@ function App() {
 
       {/* Floating Action Button - WhatsApp */}
       <a 
-        href={`https://wa.me/${(settings.whatsapp || '').replace(/\D/g, '')}`} 
+        href={`https://wa.me/55${(settings.whatsapp || '').replace(/\D/g, '')}`} 
         target="_blank" 
         rel="noopener noreferrer" 
         className="fixed bottom-10 right-10 z-[100] bg-green-600 hover:bg-green-700 text-white p-6 rounded-[2rem] shadow-[0_20px_50px_rgba(22,101,52,0.4)] hover:shadow-[0_20px_50px_rgba(22,101,52,0.6)] transition-all hover:-translate-y-2 active:scale-95 group"
