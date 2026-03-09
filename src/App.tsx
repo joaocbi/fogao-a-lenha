@@ -483,27 +483,26 @@ function App() {
             // If local image is empty, it means it was never set or was cleared
             mergedItems = cloudData.items.map((cloudItem: MenuItem) => {
               const localItem = items.find(item => item.id === cloudItem.id);
-              // Keep local image only if it exists and is not empty
-              // This allows new items from cloud to work, but preserves existing local images
+              // Use cloud image if it exists (since it now contains compressed images from admin sync),
+              // otherwise keep local image. This ensures mobile gets the updated images.
               return {
                 ...cloudItem,
-                image: (localItem?.image && localItem.image.trim() !== '') ? localItem.image : (cloudItem.image || '')
+                image: (cloudItem.image && cloudItem.image.trim() !== '') ? cloudItem.image : (localItem?.image || '')
               };
             });
             
-            // Preserve local images in settings - but only if local image exists
+            // Preserve local images in settings - but only if cloud image is missing
             mergedSettings = {
               ...cloudData.settings,
-              // Only preserve local images if they exist and are not empty
-              logo: (settings.logo && settings.logo.trim() !== '') ? settings.logo : (cloudData.settings.logo || ''),
+              logo: (cloudData.settings.logo && cloudData.settings.logo.trim() !== '') ? cloudData.settings.logo : (settings.logo || ''),
               logoSize: cloudData.settings.logoSize || settings.logoSize,
               logoSizePx: cloudData.settings.logoSizePx || settings.logoSizePx,
-              heroVideo: (settings.heroVideo && settings.heroVideo.trim() !== '') ? settings.heroVideo : (cloudData.settings.heroVideo || ''),
-              heroImage: (settings.heroImage && settings.heroImage.trim() !== '') ? settings.heroImage : (cloudData.settings.heroImage || ''),
-              aboutImage1: (settings.aboutImage1 && settings.aboutImage1.trim() !== '') ? settings.aboutImage1 : (cloudData.settings.aboutImage1 || ''),
+              heroVideo: (cloudData.settings.heroVideo && cloudData.settings.heroVideo.trim() !== '') ? cloudData.settings.heroVideo : (settings.heroVideo || ''),
+              heroImage: (cloudData.settings.heroImage && cloudData.settings.heroImage.trim() !== '') ? cloudData.settings.heroImage : (settings.heroImage || ''),
+              aboutImage1: (cloudData.settings.aboutImage1 && cloudData.settings.aboutImage1.trim() !== '') ? cloudData.settings.aboutImage1 : (settings.aboutImage1 || ''),
               aboutImage1Size: cloudData.settings.aboutImage1Size || settings.aboutImage1Size,
               aboutImage1SizePx: cloudData.settings.aboutImage1SizePx || settings.aboutImage1SizePx,
-              aboutImage2: (settings.aboutImage2 && settings.aboutImage2.trim() !== '') ? settings.aboutImage2 : (cloudData.settings.aboutImage2 || ''),
+              aboutImage2: (cloudData.settings.aboutImage2 && cloudData.settings.aboutImage2.trim() !== '') ? cloudData.settings.aboutImage2 : (settings.aboutImage2 || ''),
               aboutImage2Size: cloudData.settings.aboutImage2Size || settings.aboutImage2Size,
               aboutImage2SizePx: cloudData.settings.aboutImage2SizePx || settings.aboutImage2SizePx
             };
