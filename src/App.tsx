@@ -1444,33 +1444,23 @@ function App() {
           <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1 overflow-hidden">
             {settings.logo ? (
               (() => {
-                // Get logo size classes
-                const getLogoSizeClasses = () => {
-                  if (settings.logoSize === 'custom' && settings.logoSizePx) {
-                    return '';
-                  }
-                  const sizeMap: Record<string, string> = {
-                    small: 'w-8 h-8 sm:w-12 sm:h-12',
-                    medium: 'w-10 h-10 sm:w-16 sm:h-16',
-                    large: 'w-12 h-12 sm:w-20 sm:h-20',
-                  };
-                  return sizeMap[settings.logoSize || 'medium'] || sizeMap.medium;
-                };
-                const sizeClasses = getLogoSizeClasses();
+                // Logo size matches title text size: text-[11px] sm:text-lg md:text-2xl
+                // Mobile: 11px, sm: 18px (text-lg), md: 24px (text-2xl)
+                const logoSizeClasses = 'h-[11px] sm:h-[18px] md:h-[24px] w-auto';
                 const customStyle = settings.logoSize === 'custom' && settings.logoSizePx
-                  ? { width: `${settings.logoSizePx}px`, height: `${settings.logoSizePx}px` }
+                  ? { height: `${settings.logoSizePx}px`, width: 'auto' }
                   : {};
                 return (
                   <img 
                     src={settings.logo} 
                     alt={settings.name || 'Logo'} 
-                    className={`${sizeClasses} object-contain rounded-lg sm:rounded-xl flex-shrink-0`}
+                    className={`${logoSizeClasses} object-contain rounded-lg sm:rounded-xl flex-shrink-0`}
                     style={customStyle}
                   />
                 );
               })()
             ) : (
-              <div className="w-10 h-10 sm:w-16 sm:h-16 bg-orange-700 rounded-xl sm:rounded-2xl flex items-center justify-center text-white font-black text-sm sm:text-2xl shadow-lg shadow-orange-700/20 rotate-3 flex-shrink-0">
+              <div className="h-[11px] sm:h-[18px] md:h-[24px] aspect-square bg-orange-700 rounded-xl sm:rounded-2xl flex items-center justify-center text-white font-black text-[11px] sm:text-lg md:text-2xl shadow-lg shadow-orange-700/20 rotate-3 flex-shrink-0">
                 {(settings.name || 'Fogão a Lenha').split(' ').filter(Boolean).map(n => n[0] || '').join('').slice(0, 2).toUpperCase()}
               </div>
             )}
