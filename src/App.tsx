@@ -608,12 +608,32 @@ function App() {
     isAdminOpenRef.current = isAdminOpen;
   }, [isAdminOpen]);
 
+  // Backup function - saves current data before overwriting
+  const createBackup = (cats: Category[], its: MenuItem[], sets: RestaurantSettings, ords: Order[]) => {
+    try {
+      const backup = {
+        categories: JSON.parse(JSON.stringify(cats)),
+        items: JSON.parse(JSON.stringify(its)),
+        settings: JSON.parse(JSON.stringify(sets)),
+        orders: JSON.parse(JSON.stringify(ords)),
+        timestamp: new Date().toISOString()
+      };
+      localStorage.setItem('minas_v2_backup', JSON.stringify(backup));
+      console.log('✅ Backup created:', backup.timestamp);
+    } catch (error) {
+      console.error('Error creating backup:', error);
+    }
+  };
+
   // Load from cloud on mount - preserve local images
   useEffect(() => {
     let lastCloudUpdate: string | null = null;
     
     const checkCloudUpdates = async () => {
       try {
+        // Create backup before loading from cloud
+        createBackup(categories, items, settings, orders);
+        
         const response = await fetch(getApiUrl());
         const result = await response.json();
         
@@ -632,6 +652,7 @@ function App() {
               
               console.log('🔄 New data detected in cloud, updating...');
               await loadFromCloud(true);
+              
               // Show a subtle notification that data was updated
               setLastSyncStatus({
                 success: true,
@@ -701,10 +722,71 @@ function App() {
 
   // No forced migration - allow any name
 
+  // Recovery check ref - ensures recovery only runs once
+  const recoveryCheckedRef = useRef(false);
+  
+  // Recovery check - tries to recover "Prato do Dia" category after initialization
+  useEffect(() => {
+    if (!isInitialized || recoveryCheckedRef.current) return;
+    recoveryCheckedRef.current = true;
+    
+    // Check if we need to recover or add "Prato do Dia"
+    const checkAndRecover = () => {
+      try {
+        const backupStr = localStorage.getItem('minas_v2_backup');
+        const currentCategories = JSON.parse(localStorage.getItem('minas_v2_categories') || '[]');
+        const hasPratoDoDia = currentCategories.some((cat: Category) => 
+          cat.name && cat.name.toLowerCase().includes('prato') && cat.name.toLowerCase().includes('dia')
+        );
+        
+        if (!hasPratoDoDia && backupStr) {
+          const backup = JSON.parse(backupStr);
+          const backupHasPratoDoDia = backup.categories?.some((cat: Category) => 
+            cat.name && cat.name.toLowerCase().includes('prato') && cat.name.toLowerCase().includes('dia')
+          );
+          
+          if (backupHasPratoDoDia) {
+            // Recover from backup
+            console.log('🔄 Recovering "Prato do Dia" category from backup...');
+            setCategories(backup.categories);
+            setItems(backup.items);
+            setSettings(backup.settings);
+            if (backup.orders) setOrders(backup.orders);
+            return;
+          }
+        }
+        
+        // If no backup or backup doesn't have it, add the category
+        if (!hasPratoDoDia) {
+          console.log('➕ Adding "Prato do Dia" category...');
+          const newCategory: Category = {
+            id: generateId(),
+            name: 'Prato do Dia'
+          };
+          setCategories(prev => {
+            // Check if already exists to avoid duplicates
+            const exists = prev.some(cat => 
+              cat.name.toLowerCase().includes('prato') && cat.name.toLowerCase().includes('dia')
+            );
+            return exists ? prev : [...prev, newCategory];
+          });
+        }
+      } catch (error) {
+        console.error('Error in recovery check:', error);
+      }
+    };
+    
+    // Wait a bit for state to settle, then check
+    const timeout = setTimeout(checkAndRecover, 1000);
+    return () => clearTimeout(timeout);
+  }, [isInitialized]);
+
   // Auto-save to localStorage (only after initialization to avoid overwriting loaded data)
   useEffect(() => {
     if (!isInitialized) return;
     try {
+      // Create backup before saving (only once per save cycle to avoid loops)
+      createBackup(categories, items, settings, orders);
       localStorage.setItem('minas_v2_categories', JSON.stringify(categories));
     } catch (error) {
       console.error('Error saving categories to localStorage:', error);
