@@ -13,6 +13,28 @@ export interface Category {
   name: string;
 }
 
+export interface BankInfo {
+  bankName?: string;
+  bankCode?: string;
+  agency?: string;
+  account?: string;
+  accountType?: 'checking' | 'savings';
+  accountHolderName?: string;
+  cpfCnpj?: string;
+  pixKey?: string;
+  pixKeyType?: 'cpf' | 'cnpj' | 'email' | 'phone' | 'random';
+}
+
+export interface PaymentTokens {
+  mercadoPagoToken?: string;
+  mercadoPagoPublicKey?: string;
+  pagSeguroToken?: string;
+  pagSeguroEmail?: string;
+  stripeToken?: string;
+  stripePublicKey?: string;
+  otherTokens?: { name: string; token: string }[];
+}
+
 export interface RestaurantSettings {
   name: string;
   logo?: string;
@@ -35,6 +57,8 @@ export interface RestaurantSettings {
   deliveryFee: number;
   minOrder: number;
   paymentMethods: string[];
+  bankInfo?: BankInfo;
+  paymentTokens?: PaymentTokens;
 }
 
 export interface Order {

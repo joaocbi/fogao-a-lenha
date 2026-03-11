@@ -22,7 +22,10 @@ import {
   Image as ImageIcon,
   CheckCircle,
   ChevronDown,
-  Tag
+  Tag,
+  Wallet,
+  Key,
+  Building2
 } from 'lucide-react';
 import type { MenuItem, Category, RestaurantSettings, Order } from './types';
 import { initialCategories, initialMenuItems, initialSettings } from './data';
@@ -191,6 +194,41 @@ function App() {
       }
     }
   }, [settings.name]);
+
+  // Initialize bankInfo and paymentTokens if they don't exist
+  useEffect(() => {
+    if (!settings.bankInfo || !settings.paymentTokens) {
+      const updatedSettings = {
+        ...settings,
+        bankInfo: settings.bankInfo || {
+          bankName: '',
+          bankCode: '',
+          agency: '',
+          account: '',
+          accountType: 'checking',
+          accountHolderName: '',
+          cpfCnpj: '',
+          pixKey: '',
+          pixKeyType: 'cpf',
+        },
+        paymentTokens: settings.paymentTokens || {
+          mercadoPagoToken: '',
+          mercadoPagoPublicKey: '',
+          pagSeguroToken: '',
+          pagSeguroEmail: '',
+          stripeToken: '',
+          stripePublicKey: '',
+          otherTokens: [],
+        },
+      };
+      setSettings(updatedSettings);
+      try {
+        localStorage.setItem('minas_v2_settings', JSON.stringify(updatedSettings));
+      } catch (e) {
+        console.error('Error initializing bank info and payment tokens:', e);
+      }
+    }
+  }, []);
   
   useEffect(() => {
     // Check if admin is already authenticated (password stored in localStorage)
@@ -1024,6 +1062,58 @@ function App() {
     } catch (error) {
       console.error('Error exporting data with images:', error);
       alert('Erro ao exportar dados com imagens.');
+    }
+  };
+
+  // Restore backup from localStorage
+  const restoreFromBackup = () => {
+    try {
+      const backupStr = localStorage.getItem('minas_v2_backup');
+      if (!backupStr) {
+        alert('❌ Nenhum backup encontrado no armazenamento local.\n\nO backup automático é criado antes de sincronizações com a nuvem.');
+        return;
+      }
+      
+      const backup = JSON.parse(backupStr);
+      
+      if (!backup.categories || !backup.items || !backup.settings) {
+        alert('❌ Backup inválido ou corrompido.');
+        return;
+      }
+      
+      const backupDate = backup.timestamp ? new Date(backup.timestamp).toLocaleString('pt-BR') : 'Data desconhecida';
+      const confirmMsg = `🔄 Restaurar backup?\n\n` +
+        `Data do backup: ${backupDate}\n` +
+        `Categorias: ${backup.categories.length}\n` +
+        `Itens: ${backup.items.length}\n\n` +
+        `⚠️ ATENÇÃO: Isso substituirá TODOS os dados atuais!\n\n` +
+        `Deseja continuar?`;
+      
+      if (!confirm(confirmMsg)) {
+        return;
+      }
+      
+      // Restore data
+      setCategories(backup.categories);
+      setItems(backup.items);
+      setSettings(backup.settings);
+      if (backup.orders) {
+        setOrders(backup.orders);
+      }
+      
+      // Save to localStorage
+      localStorage.setItem('minas_v2_categories', JSON.stringify(backup.categories));
+      localStorage.setItem('minas_v2_items', JSON.stringify(backup.items));
+      localStorage.setItem('minas_v2_settings', JSON.stringify(backup.settings));
+      if (backup.orders) {
+        localStorage.setItem('minas_v2_orders', JSON.stringify(backup.orders));
+      }
+      
+      alert('✅ Backup restaurado com sucesso!\n\nA página será recarregada em 1 segundo...');
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (error) {
+      console.error('Error restoring backup:', error);
+      alert('❌ Erro ao restaurar backup. Verifique o console para mais detalhes.');
     }
   };
 
@@ -3312,6 +3402,13 @@ function App() {
                               </button>
                             </div>
                             <button 
+                              onClick={restoreFromBackup}
+                              className="w-full px-4 sm:px-8 py-3 sm:py-5 bg-blue-50 text-blue-600 font-black uppercase tracking-widest rounded-xl sm:rounded-[1.5rem] hover:bg-blue-100 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs sm:text-sm border-2 border-blue-200"
+                              title="Restaura o último backup automático salvo no navegador"
+                            >
+                              <RefreshCw size={14} className="sm:w-4 sm:h-4" /> 🔄 Restaurar Backup Automático
+                            </button>
+                            <button 
                               onClick={exportDataWithImages}
                               className="w-full px-4 sm:px-8 py-3 sm:py-5 bg-green-50 text-green-600 font-black uppercase tracking-widest rounded-xl sm:rounded-[1.5rem] hover:bg-green-100 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs sm:text-sm border-2 border-green-200"
                             >
@@ -3338,6 +3435,316 @@ function App() {
                             <p className="text-[10px] sm:text-xs text-stone-400 text-center px-2">
                               💡 <strong>Para sincronizar imagens:</strong> Use "Copiar Completo (COM Imagens)" no PC, depois "Colar JSON" no celular. Para WhatsApp (sem imagens), use "Copiar para Celular (Sem Imagens)" que divide automaticamente.
                             </p>
+                          </div>
+                        </div>
+
+                        <div>
+                          <h5 className="text-lg sm:text-xl font-black text-stone-900 mb-4 uppercase tracking-widest text-xs flex items-center gap-2">
+                            <Building2 size={18} className="text-orange-700" /> Informações Bancárias
+                          </h5>
+                          <div className="space-y-4 p-6 bg-stone-50/50 rounded-2xl border border-stone-100">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.3em] mb-2 block">Nome do Banco</label>
+                                <input
+                                  type="text"
+                                  value={settings.bankInfo?.bankName || ''}
+                                  onChange={(e) => setSettings({
+                                    ...settings,
+                                    bankInfo: { ...settings.bankInfo, bankName: e.target.value }
+                                  })}
+                                  className="w-full px-4 py-3 bg-white border border-stone-200 rounded-xl text-sm font-medium text-stone-900 focus:outline-none focus:ring-2 focus:ring-orange-700 focus:border-orange-700"
+                                  placeholder="Ex: Banco do Brasil"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.3em] mb-2 block">Código do Banco</label>
+                                <input
+                                  type="text"
+                                  value={settings.bankInfo?.bankCode || ''}
+                                  onChange={(e) => setSettings({
+                                    ...settings,
+                                    bankInfo: { ...settings.bankInfo, bankCode: e.target.value }
+                                  })}
+                                  className="w-full px-4 py-3 bg-white border border-stone-200 rounded-xl text-sm font-medium text-stone-900 focus:outline-none focus:ring-2 focus:ring-orange-700 focus:border-orange-700"
+                                  placeholder="Ex: 001"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.3em] mb-2 block">Agência</label>
+                                <input
+                                  type="text"
+                                  value={settings.bankInfo?.agency || ''}
+                                  onChange={(e) => setSettings({
+                                    ...settings,
+                                    bankInfo: { ...settings.bankInfo, agency: e.target.value }
+                                  })}
+                                  className="w-full px-4 py-3 bg-white border border-stone-200 rounded-xl text-sm font-medium text-stone-900 focus:outline-none focus:ring-2 focus:ring-orange-700 focus:border-orange-700"
+                                  placeholder="Ex: 1234-5"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.3em] mb-2 block">Conta</label>
+                                <input
+                                  type="text"
+                                  value={settings.bankInfo?.account || ''}
+                                  onChange={(e) => setSettings({
+                                    ...settings,
+                                    bankInfo: { ...settings.bankInfo, account: e.target.value }
+                                  })}
+                                  className="w-full px-4 py-3 bg-white border border-stone-200 rounded-xl text-sm font-medium text-stone-900 focus:outline-none focus:ring-2 focus:ring-orange-700 focus:border-orange-700"
+                                  placeholder="Ex: 12345-6"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.3em] mb-2 block">Tipo de Conta</label>
+                                <select
+                                  value={settings.bankInfo?.accountType || 'checking'}
+                                  onChange={(e) => setSettings({
+                                    ...settings,
+                                    bankInfo: { ...settings.bankInfo, accountType: e.target.value as 'checking' | 'savings' }
+                                  })}
+                                  className="w-full px-4 py-3 bg-white border border-stone-200 rounded-xl text-sm font-medium text-stone-900 focus:outline-none focus:ring-2 focus:ring-orange-700 focus:border-orange-700"
+                                >
+                                  <option value="checking">Conta Corrente</option>
+                                  <option value="savings">Conta Poupança</option>
+                                </select>
+                              </div>
+                              <div>
+                                <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.3em] mb-2 block">Nome do Titular</label>
+                                <input
+                                  type="text"
+                                  value={settings.bankInfo?.accountHolderName || ''}
+                                  onChange={(e) => setSettings({
+                                    ...settings,
+                                    bankInfo: { ...settings.bankInfo, accountHolderName: e.target.value }
+                                  })}
+                                  className="w-full px-4 py-3 bg-white border border-stone-200 rounded-xl text-sm font-medium text-stone-900 focus:outline-none focus:ring-2 focus:ring-orange-700 focus:border-orange-700"
+                                  placeholder="Nome completo do titular"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.3em] mb-2 block">CPF/CNPJ</label>
+                                <input
+                                  type="text"
+                                  value={settings.bankInfo?.cpfCnpj || ''}
+                                  onChange={(e) => setSettings({
+                                    ...settings,
+                                    bankInfo: { ...settings.bankInfo, cpfCnpj: e.target.value }
+                                  })}
+                                  className="w-full px-4 py-3 bg-white border border-stone-200 rounded-xl text-sm font-medium text-stone-900 focus:outline-none focus:ring-2 focus:ring-orange-700 focus:border-orange-700"
+                                  placeholder="000.000.000-00 ou 00.000.000/0000-00"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.3em] mb-2 block">Chave PIX</label>
+                                <input
+                                  type="text"
+                                  value={settings.bankInfo?.pixKey || ''}
+                                  onChange={(e) => setSettings({
+                                    ...settings,
+                                    bankInfo: { ...settings.bankInfo, pixKey: e.target.value }
+                                  })}
+                                  className="w-full px-4 py-3 bg-white border border-stone-200 rounded-xl text-sm font-medium text-stone-900 focus:outline-none focus:ring-2 focus:ring-orange-700 focus:border-orange-700"
+                                  placeholder="Chave PIX"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.3em] mb-2 block">Tipo de Chave PIX</label>
+                                <select
+                                  value={settings.bankInfo?.pixKeyType || 'cpf'}
+                                  onChange={(e) => setSettings({
+                                    ...settings,
+                                    bankInfo: { ...settings.bankInfo, pixKeyType: e.target.value as 'cpf' | 'cnpj' | 'email' | 'phone' | 'random' }
+                                  })}
+                                  className="w-full px-4 py-3 bg-white border border-stone-200 rounded-xl text-sm font-medium text-stone-900 focus:outline-none focus:ring-2 focus:ring-orange-700 focus:border-orange-700"
+                                >
+                                  <option value="cpf">CPF</option>
+                                  <option value="cnpj">CNPJ</option>
+                                  <option value="email">E-mail</option>
+                                  <option value="phone">Telefone</option>
+                                  <option value="random">Chave Aleatória</option>
+                                </select>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div>
+                          <h5 className="text-lg sm:text-xl font-black text-stone-900 mb-4 uppercase tracking-widest text-xs flex items-center gap-2">
+                            <Key size={18} className="text-orange-700" /> Tokens de Recebimento
+                          </h5>
+                          <div className="space-y-4 p-6 bg-stone-50/50 rounded-2xl border border-stone-100">
+                            <div className="space-y-4">
+                              <div>
+                                <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.3em] mb-2 block flex items-center gap-2">
+                                  <Wallet size={14} /> Mercado Pago
+                                </label>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div>
+                                    <label className="text-[9px] font-black text-stone-500 uppercase tracking-[0.2em] mb-1 block">Access Token</label>
+                                    <input
+                                      type="password"
+                                      value={settings.paymentTokens?.mercadoPagoToken || ''}
+                                      onChange={(e) => setSettings({
+                                        ...settings,
+                                        paymentTokens: { ...settings.paymentTokens, mercadoPagoToken: e.target.value }
+                                      })}
+                                      className="w-full px-4 py-3 bg-white border border-stone-200 rounded-xl text-sm font-medium text-stone-900 focus:outline-none focus:ring-2 focus:ring-orange-700 focus:border-orange-700 font-mono"
+                                      placeholder="APP_USR-..."
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="text-[9px] font-black text-stone-500 uppercase tracking-[0.2em] mb-1 block">Public Key</label>
+                                    <input
+                                      type="text"
+                                      value={settings.paymentTokens?.mercadoPagoPublicKey || ''}
+                                      onChange={(e) => setSettings({
+                                        ...settings,
+                                        paymentTokens: { ...settings.paymentTokens, mercadoPagoPublicKey: e.target.value }
+                                      })}
+                                      className="w-full px-4 py-3 bg-white border border-stone-200 rounded-xl text-sm font-medium text-stone-900 focus:outline-none focus:ring-2 focus:ring-orange-700 focus:border-orange-700 font-mono"
+                                      placeholder="APP_USR-..."
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div>
+                                <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.3em] mb-2 block flex items-center gap-2">
+                                  <Wallet size={14} /> PagSeguro
+                                </label>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div>
+                                    <label className="text-[9px] font-black text-stone-500 uppercase tracking-[0.2em] mb-1 block">Token</label>
+                                    <input
+                                      type="password"
+                                      value={settings.paymentTokens?.pagSeguroToken || ''}
+                                      onChange={(e) => setSettings({
+                                        ...settings,
+                                        paymentTokens: { ...settings.paymentTokens, pagSeguroToken: e.target.value }
+                                      })}
+                                      className="w-full px-4 py-3 bg-white border border-stone-200 rounded-xl text-sm font-medium text-stone-900 focus:outline-none focus:ring-2 focus:ring-orange-700 focus:border-orange-700 font-mono"
+                                      placeholder="Token do PagSeguro"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="text-[9px] font-black text-stone-500 uppercase tracking-[0.2em] mb-1 block">E-mail</label>
+                                    <input
+                                      type="email"
+                                      value={settings.paymentTokens?.pagSeguroEmail || ''}
+                                      onChange={(e) => setSettings({
+                                        ...settings,
+                                        paymentTokens: { ...settings.paymentTokens, pagSeguroEmail: e.target.value }
+                                      })}
+                                      className="w-full px-4 py-3 bg-white border border-stone-200 rounded-xl text-sm font-medium text-stone-900 focus:outline-none focus:ring-2 focus:ring-orange-700 focus:border-orange-700"
+                                      placeholder="email@exemplo.com"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div>
+                                <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.3em] mb-2 block flex items-center gap-2">
+                                  <Wallet size={14} /> Stripe
+                                </label>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div>
+                                    <label className="text-[9px] font-black text-stone-500 uppercase tracking-[0.2em] mb-1 block">Secret Key</label>
+                                    <input
+                                      type="password"
+                                      value={settings.paymentTokens?.stripeToken || ''}
+                                      onChange={(e) => setSettings({
+                                        ...settings,
+                                        paymentTokens: { ...settings.paymentTokens, stripeToken: e.target.value }
+                                      })}
+                                      className="w-full px-4 py-3 bg-white border border-stone-200 rounded-xl text-sm font-medium text-stone-900 focus:outline-none focus:ring-2 focus:ring-orange-700 focus:border-orange-700 font-mono"
+                                      placeholder="sk_live_..."
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="text-[9px] font-black text-stone-500 uppercase tracking-[0.2em] mb-1 block">Publishable Key</label>
+                                    <input
+                                      type="text"
+                                      value={settings.paymentTokens?.stripePublicKey || ''}
+                                      onChange={(e) => setSettings({
+                                        ...settings,
+                                        paymentTokens: { ...settings.paymentTokens, stripePublicKey: e.target.value }
+                                      })}
+                                      className="w-full px-4 py-3 bg-white border border-stone-200 rounded-xl text-sm font-medium text-stone-900 focus:outline-none focus:ring-2 focus:ring-orange-700 focus:border-orange-700 font-mono"
+                                      placeholder="pk_live_..."
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div>
+                                <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.3em] mb-2 block flex items-center gap-2">
+                                  <Key size={14} /> Outros Tokens
+                                </label>
+                                <div className="space-y-3">
+                                  {(settings.paymentTokens?.otherTokens || []).map((token, index) => (
+                                    <div key={index} className="flex gap-2">
+                                      <input
+                                        type="text"
+                                        value={token.name}
+                                        onChange={(e) => {
+                                          const updated = [...(settings.paymentTokens?.otherTokens || [])];
+                                          updated[index] = { ...updated[index], name: e.target.value };
+                                          setSettings({
+                                            ...settings,
+                                            paymentTokens: { ...settings.paymentTokens, otherTokens: updated }
+                                          });
+                                        }}
+                                        className="flex-1 px-4 py-3 bg-white border border-stone-200 rounded-xl text-sm font-medium text-stone-900 focus:outline-none focus:ring-2 focus:ring-orange-700 focus:border-orange-700"
+                                        placeholder="Nome do serviço"
+                                      />
+                                      <input
+                                        type="password"
+                                        value={token.token}
+                                        onChange={(e) => {
+                                          const updated = [...(settings.paymentTokens?.otherTokens || [])];
+                                          updated[index] = { ...updated[index], token: e.target.value };
+                                          setSettings({
+                                            ...settings,
+                                            paymentTokens: { ...settings.paymentTokens, otherTokens: updated }
+                                          });
+                                        }}
+                                        className="flex-1 px-4 py-3 bg-white border border-stone-200 rounded-xl text-sm font-medium text-stone-900 focus:outline-none focus:ring-2 focus:ring-orange-700 focus:border-orange-700 font-mono"
+                                        placeholder="Token"
+                                      />
+                                      <button
+                                        onClick={() => {
+                                          const updated = (settings.paymentTokens?.otherTokens || []).filter((_, i) => i !== index);
+                                          setSettings({
+                                            ...settings,
+                                            paymentTokens: { ...settings.paymentTokens, otherTokens: updated }
+                                          });
+                                        }}
+                                        className="px-4 py-3 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl font-black text-xs uppercase transition-all"
+                                      >
+                                        <Trash2 size={16} />
+                                      </button>
+                                    </div>
+                                  ))}
+                                  <button
+                                    onClick={() => {
+                                      const current = settings.paymentTokens?.otherTokens || [];
+                                      setSettings({
+                                        ...settings,
+                                        paymentTokens: {
+                                          ...settings.paymentTokens,
+                                          otherTokens: [...current, { name: '', token: '' }]
+                                        }
+                                      });
+                                    }}
+                                    className="w-full px-4 py-3 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                                  >
+                                    <Plus size={16} /> Adicionar Token
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
                           </div>
                         </div>
 
