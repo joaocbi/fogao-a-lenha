@@ -240,6 +240,10 @@ function App() {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [openCategoryDropdown, setOpenCategoryDropdown] = useState<string | null>(null);
+  const [imagePosition, setImagePosition] = useState<'left' | 'right'>(() => {
+    const stored = localStorage.getItem('minas_image_position');
+    return (stored === 'right' ? 'right' : 'left') as 'left' | 'right';
+  });
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isPaymentReviewOpen, setIsPaymentReviewOpen] = useState(false);
   const [orderConfirmation, setOrderConfirmation] = useState<Order | null>(null);
@@ -2246,24 +2250,37 @@ function App() {
                           <h4 className="text-4xl font-black text-stone-900 tracking-tighter mb-2">Gerenciar Cardápio</h4>
                           <p className="text-stone-400 font-bold text-xs uppercase tracking-widest">Adicione e edite seus pratos</p>
                         </div>
-                        <button 
-                          onClick={() => {
-                            if (categories.length === 0) {
-                              alert('Por favor, crie uma categoria primeiro!');
-                              return;
-                            }
-                            setNewItemForm({ name: '', price: '', description: '', category: categories[0]?.id || '' });
-                            setIsNewItemModalOpen(true);
-                          }}
-                          className="px-8 py-4 bg-orange-700 hover:bg-orange-800 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-2xl shadow-orange-700/20 transition-all active:scale-95 flex items-center gap-3"
-                        >
-                          <Plus size={20} /> Novo Item
-                        </button>
+                        <div className="flex gap-3">
+                          <button 
+                            onClick={() => {
+                              const newPosition = imagePosition === 'left' ? 'right' : 'left';
+                              setImagePosition(newPosition);
+                              localStorage.setItem('minas_image_position', newPosition);
+                            }}
+                            className="px-6 py-4 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg transition-all active:scale-95 flex items-center gap-3"
+                            title={`Alternar posição da imagem: ${imagePosition === 'left' ? 'Direita' : 'Esquerda'}`}
+                          >
+                            <ImageIcon size={20} /> {imagePosition === 'left' ? 'Imagem →' : '← Imagem'}
+                          </button>
+                          <button 
+                            onClick={() => {
+                              if (categories.length === 0) {
+                                alert('Por favor, crie uma categoria primeiro!');
+                                return;
+                              }
+                              setNewItemForm({ name: '', price: '', description: '', category: categories[0]?.id || '' });
+                              setIsNewItemModalOpen(true);
+                            }}
+                            className="px-8 py-4 bg-orange-700 hover:bg-orange-800 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-2xl shadow-orange-700/20 transition-all active:scale-95 flex items-center gap-3"
+                          >
+                            <Plus size={20} /> Novo Item
+                          </button>
+                        </div>
                       </div>
 
                       <div className="grid grid-cols-1 gap-4">
                         {items.map(item => (
-                          <div key={item.id} className="p-6 bg-white border border-stone-100 rounded-[2rem] flex flex-wrap items-center gap-8 shadow-sm group">
+                          <div key={item.id} className={`p-6 bg-white border border-stone-100 rounded-[2rem] flex flex-wrap items-center gap-8 shadow-sm group ${imagePosition === 'right' ? 'flex-row-reverse' : ''}`}>
                             <div className="w-24 h-24 bg-stone-100 rounded-3xl overflow-hidden shrink-0 shadow-lg group-hover:scale-105 transition-transform duration-500">
                               <img src={item.image || "https://images.unsplash.com/photo-1514327605112-b887c0e61c0a?q=80&w=2070&auto=format&fit=crop"} className="w-full h-full object-cover" alt="" />
                             </div>
@@ -2299,12 +2316,11 @@ function App() {
                                   </button>
                                   {openCategoryDropdown === item.id && (
                                     <div 
-                                      className="absolute top-full left-0 mt-2 bg-white border-2 border-orange-300 rounded-2xl shadow-2xl z-[200] min-w-[220px]"
+                                      className={`absolute top-full mt-2 bg-white border-2 border-orange-300 rounded-2xl shadow-2xl z-[200] min-w-[220px] ${imagePosition === 'right' ? 'right-0' : 'left-0'}`}
                                       style={{ 
                                         zIndex: 200, 
                                         position: 'absolute',
                                         top: '100%',
-                                        left: 0,
                                         maxHeight: 'min(500px, calc(100vh - 200px))'
                                       }}
                                       onClick={(e) => e.stopPropagation()}
