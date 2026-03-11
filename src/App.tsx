@@ -2509,6 +2509,18 @@ function App() {
                               } catch (e) {
                                 console.error('Error saving categories:', e);
                               }
+                              // Scroll to the new category after a short delay
+                              setTimeout(() => {
+                                const categoryElement = document.querySelector(`[data-category-id="${newCategory.id}"]`);
+                                if (categoryElement) {
+                                  categoryElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                  // Highlight the new category briefly
+                                  categoryElement.classList.add('ring-2', 'ring-orange-500');
+                                  setTimeout(() => {
+                                    categoryElement.classList.remove('ring-2', 'ring-orange-500');
+                                  }, 2000);
+                                }
+                              }, 100);
                             }
                           }}
                           className="px-8 py-4 bg-orange-700 hover:bg-orange-800 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-2xl shadow-orange-700/20 transition-all active:scale-95 flex items-center gap-3"
@@ -2521,7 +2533,7 @@ function App() {
                         {categories.map(cat => {
                           const itemsInCategory = items.filter(item => item.category === cat.id).length;
                           return (
-                          <div key={cat.id} className="p-8 bg-white border border-stone-100 rounded-[2.5rem] flex items-center justify-between shadow-sm group hover:border-orange-200 transition-colors">
+                          <div key={cat.id} data-category-id={cat.id} className="p-8 bg-white border border-stone-100 rounded-[2.5rem] flex items-center justify-between shadow-sm group hover:border-orange-200 transition-colors">
                             <div className="flex flex-col">
                             <span className="font-black text-lg text-stone-900 tracking-tight">{cat.name}</span>
                               <span className="text-xs text-stone-400 font-bold uppercase tracking-widest mt-1">
